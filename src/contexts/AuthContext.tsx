@@ -9,7 +9,7 @@ import {
   signOut as firebaseSignOut,
   sendPasswordResetEmail,
 } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, Timestamp } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { User } from '@/lib/types';
 import { Loader2 } from 'lucide-react';
@@ -36,10 +36,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(firebaseUser);
       
       if (firebaseUser) {
-        // Fetch user data from Firestore
-        const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
-        if (userDoc.exists()) {
-          setUserData(userDoc.data() as User);
+        try {
+            const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+            if (userDoc.exists()) {
+              const data = userDoc.data();
+              
+              // Konverter Firestore Timestamp til Date hvis nødvendig
+              const userData: User = {
+                ...data,
+                createdAt: data.createdAt, // Timestamp
+              } as User;
+              
+              setUserData(userData);
+            }
+        } catch (error) {
+            console.error('Error fetching user data:', error);
+            setUserData(null);
         }
       } else {
         setUserData(null);
@@ -67,7 +79,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await setDoc(doc(db, 'users', uid), {
       ...newUserData,
       userId: uid,
-      createdAt: new Date(),
+      createdAt: Timestamp.now(),
       subscriptionStatus: 'inactive',
     });
 
