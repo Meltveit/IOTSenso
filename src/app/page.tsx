@@ -11,193 +11,126 @@ const heroImage = PlaceHolderImages.find(p => p.id === "hero");
 
 export default function Home() {
   return (
-    <div className="flex flex-col min-h-screen bg-secondary/50">
-      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <SensoGuardLogo className="h-8 w-8 text-primary" />
-            <span className="text-xl font-bold font-headline text-foreground">
-              SensoGuard
-            </span>
-          </Link>
-          <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
-             <Link href="/" className="text-foreground font-semibold hover:text-foreground/80 transition-colors">Home</Link>
-             <Link href="/products" className="text-muted-foreground hover:text-foreground transition-colors">Products</Link>
-          </nav>
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" asChild>
-              <Link href="/login">Login</Link>
+    <>
+      <section className="relative py-20 md:py-32 bg-background">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h1 className="text-4xl md:text-6xl font-bold font-headline tracking-tight text-foreground">
+            Proactive Sensor Monitoring
+          </h1>
+          <p className="mt-4 max-w-2xl mx-auto text-lg md:text-xl text-muted-foreground">
+            SensoGuard provides real-time insights and predictive maintenance to protect your assets before issues arise.
+          </p>
+          <div className="mt-8 flex justify-center gap-4">
+            <Button size="lg" asChild>
+              <Link href="/signup">Sign Up Now</Link>
             </Button>
-            <Button asChild>
-              <Link href="/signup">Get Started Here</Link>
+            <Button size="lg" variant="outline" asChild>
+              <Link href="/dashboard">View Demo</Link>
             </Button>
           </div>
+           <div className="mt-16 rounded-lg overflow-hidden shadow-2xl max-w-4xl mx-auto">
+            {heroImage && (
+              <Image
+                src={heroImage.imageUrl}
+                alt={heroImage.description}
+                width={1200}
+                height={675}
+                className="w-full h-auto object-cover"
+                data-ai-hint={heroImage.imageHint}
+              />
+            )}
+          </div>
         </div>
-      </header>
-
-      <main className="flex-grow">
-        <section className="relative py-20 md:py-32 bg-background">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h1 className="text-4xl md:text-6xl font-bold font-headline tracking-tight text-foreground">
-              Proactive Sensor Monitoring
-            </h1>
-            <p className="mt-4 max-w-2xl mx-auto text-lg md:text-xl text-muted-foreground">
-              SensoGuard provides real-time insights and predictive maintenance to protect your assets before issues arise.
-            </p>
-            <div className="mt-8 flex justify-center gap-4">
-              <Button size="lg" asChild>
-                <Link href="/signup">Sign Up Now</Link>
-              </Button>
-              <Button size="lg" variant="outline" asChild>
-                <Link href="/dashboard">View Demo</Link>
-              </Button>
-            </div>
-             <div className="mt-16 rounded-lg overflow-hidden shadow-2xl max-w-4xl mx-auto">
-              {heroImage && (
-                <Image
-                  src={heroImage.imageUrl}
-                  alt={heroImage.description}
-                  width={1200}
-                  height={675}
-                  className="w-full h-auto object-cover"
-                  data-ai-hint={heroImage.imageHint}
-                />
-              )}
-            </div>
+      </section>
+      
+      <section id="problem" className="py-20 bg-background">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+              <h2 className="text-3xl md:text-4xl font-bold font-headline">The Hidden Costs of Downtime</h2>
+              <p className="mt-2 text-muted-foreground max-w-2xl mx-auto">Unforeseen equipment failures don't just stop production—they cascade into major financial losses and operational headaches.</p>
           </div>
-        </section>
-        
-        <section id="problem" className="py-20 bg-background">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center">
-                <h2 className="text-3xl md:text-4xl font-bold font-headline">The Hidden Costs of Downtime</h2>
-                <p className="mt-2 text-muted-foreground max-w-2xl mx-auto">Unforeseen equipment failures don't just stop production—they cascade into major financial losses and operational headaches.</p>
-            </div>
-            <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8">
-              <StatColumn value="42%" title="Increase in Costs" description="Average increase in maintenance costs when reacting to failures instead of preventing them." />
-              <StatColumn value="$260,000" title="Per Hour" description="The average cost of downtime for an industrial manufacturer, according to Aberdeen Research." />
-              <StatColumn value="20%" title="Production Loss" description="Typical production capacity loss due to unplanned downtime and equipment failure." />
-            </div>
+          <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8">
+            <StatColumn value="42%" title="Increase in Costs" description="Average increase in maintenance costs when reacting to failures instead of preventing them." />
+            <StatColumn value="$260,000" title="Per Hour" description="The average cost of downtime for an industrial manufacturer, according to Aberdeen Research." />
+            <StatColumn value="20%" title="Production Loss" description="Typical production capacity loss due to unplanned downtime and equipment failure." />
           </div>
-        </section>
-        
-        <section id="solution" className="py-20">
-           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-bold font-headline">From Reactive to Predictive in 3 Steps</h2>
-              <p className="mt-2 text-muted-foreground">Our platform makes it simple to start monitoring and predicting equipment health.</p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
-              <HowItWorksStep number="1" title="Connect Your Sensors" description="Easily integrate your existing MQTT-enabled sensors with our platform in minutes. No complex setup required." />
-              <HowItWorksStep number="2" title="Visualize Real-time Data" description="Monitor all your sensors from a single, intuitive dashboard. See live data streams and status indicators." />
-              <HowItWorksStep number="3" title="Receive Predictive Alerts" description="Our AI analyzes data patterns to predict failures, sending you actionable alerts before disaster strikes." />
-            </div>
-          </div>
-        </section>
-
-        <section id="features" className="py-20 bg-background">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-bold font-headline">A Smarter Way to Maintain</h2>
-              <p className="mt-2 text-muted-foreground">Everything you need for comprehensive sensor management and predictive maintenance.</p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-              <FeatureCard icon={Zap} title="Real-time Monitoring" description="Live dashboard with graphs and status indicators for immediate insights." />
-              <FeatureCard icon={Shield} title="Threshold Alerts" description="Configure custom warning and critical thresholds and get notified instantly." />
-              <FeatureCard icon={TrendingUp} title="Predictive Maintenance" description="AI-powered analysis to predict failures and suggest proactive actions." />
-              <FeatureCard icon={Bot} title="AI Recommendations" description="Get smart recommendations for optimal sensor thresholds based on historical data." />
-            </div>
-          </div>
-        </section>
-
-        <section id="testimonials" className="py-20">
-            <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="text-center mb-12">
-                    <h2 className="text-3xl md:text-4xl font-bold font-headline">Trusted by Industry Leaders</h2>
-                    <p className="mt-2 text-muted-foreground">See how companies like yours are preventing downtime and saving costs.</p>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    <TestimonialCard
-                        quote="SensoGuard has transformed our maintenance schedule. We've cut unplanned downtime by 60% and can finally be proactive instead of reactive."
-                        name="John Doe"
-                        title="Operations Manager, Acme Inc."
-                        avatarUrl="https://i.pravatar.cc/150?u=a042581f4e29026704d"
-                    />
-                    <TestimonialCard
-                        quote="The predictive capabilities are a game-changer. We caught a critical bearing failure two weeks before it was due to happen, saving us over $100,000."
-                        name="Jane Smith"
-                        title="Lead Engineer, Stark Industries"
-                        avatarUrl="https://i.pravatar.cc/150?u=a042581f4e29026704e"
-                    />
-                    <TestimonialCard
-                        quote="As a small manufacturer, we can't afford downtime. SensoGuard is affordable, easy to set up, and has given us peace of mind."
-                        name="Mike Ross"
-                        title="Owner, Ross Manufacturing"
-                        avatarUrl="https://i.pravatar.cc/150?u=a042581f4e29026704f"
-                    />
-                </div>
-            </div>
-        </section>
-
-        <section id="cta" className="py-20 bg-background">
-            <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="bg-primary text-primary-foreground rounded-lg p-10 lg:p-16 text-center">
-                    <h2 className="text-3xl md:text-4xl font-bold font-headline">Ready to Prevent Your Next Failure?</h2>
-                    <p className="mt-4 max-w-2xl mx-auto text-lg">
-                        Stop reacting and start predicting. Get started with SensoGuard today and gain full control over your equipment's health.
-                    </p>
-                    <div className="mt-8">
-                        <Button size="lg" variant="secondary" asChild className="text-primary hover:bg-white/90">
-                           <Link href="/signup">Start Your Free Trial</Link>
-                        </Button>
-                    </div>
-                </div>
-            </div>
-        </section>
-      </main>
-
-      <footer className="bg-card border-t">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
-                <div className="col-span-2 md:col-span-2">
-                     <Link href="/" className="flex items-center gap-2">
-                        <SensoGuardLogo className="h-8 w-8 text-primary" />
-                        <span className="text-xl font-bold font-headline text-foreground">
-                            SensoGuard
-                        </span>
-                    </Link>
-                    <p className="text-sm text-muted-foreground mt-4">Proactive sensor monitoring to protect your assets.</p>
-                </div>
-                <div>
-                    <h4 className="font-headline font-semibold">Product</h4>
-                    <ul className="mt-4 space-y-2 text-sm">
-                        <li><Link href="#features" className="text-muted-foreground hover:text-foreground">Features</Link></li>
-                        <li><Link href="#solution" className="text-muted-foreground hover:text-foreground">How it Works</Link></li>
-                         <li><Link href="/dashboard" className="text-muted-foreground hover:text-foreground">Demo</Link></li>
-                    </ul>
-                </div>
-                 <div>
-                    <h4 className="font-headline font-semibold">Company</h4>
-                    <ul className="mt-4 space-y-2 text-sm">
-                        <li><Link href="/about-us" className="text-muted-foreground hover:text-foreground">About Us</Link></li>
-                        <li><Link href="/contact" className="text-muted-foreground hover:text-foreground">Contact</Link></li>
-                        <li><Link href="/blog" className="text-muted-foreground hover:text-foreground">Blog</Link></li>
-                    </ul>
-                </div>
-                 <div>
-                    <h4 className="font-headline font-semibold">Legal</h4>
-                    <ul className="mt-4 space-y-2 text-sm">
-                        <li><Link href="/privacy" className="text-muted-foreground hover:text-foreground">Privacy Policy</Link></li>
-                        <li><Link href="/terms" className="text-muted-foreground hover:text-foreground">Terms of Service</Link></li>
-                    </ul>
-                </div>
-            </div>
-             <div className="mt-8 border-t pt-6 text-center text-sm text-muted-foreground">
-                <p>&copy; {new Date().getFullYear()} SensoGuard. All rights reserved.</p>
-            </div>
         </div>
-      </footer>
-    </div>
+      </section>
+      
+      <section id="solution" className="py-20">
+         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold font-headline">From Reactive to Predictive in 3 Steps</h2>
+            <p className="mt-2 text-muted-foreground">Our platform makes it simple to start monitoring and predicting equipment health.</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+            <HowItWorksStep number="1" title="Connect Your Sensors" description="Easily integrate your existing MQTT-enabled sensors with our platform in minutes. No complex setup required." />
+            <HowItWorksStep number="2" title="Visualize Real-time Data" description="Monitor all your sensors from a single, intuitive dashboard. See live data streams and status indicators." />
+            <HowItWorksStep number="3" title="Receive Predictive Alerts" description="Our AI analyzes data patterns to predict failures, sending you actionable alerts before disaster strikes." />
+          </div>
+        </div>
+      </section>
+
+      <section id="features" className="py-20 bg-background">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold font-headline">A Smarter Way to Maintain</h2>
+            <p className="mt-2 text-muted-foreground">Everything you need for comprehensive sensor management and predictive maintenance.</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <FeatureCard icon={Zap} title="Real-time Monitoring" description="Live dashboard with graphs and status indicators for immediate insights." />
+            <FeatureCard icon={Shield} title="Threshold Alerts" description="Configure custom warning and critical thresholds and get notified instantly." />
+            <FeatureCard icon={TrendingUp} title="Predictive Maintenance" description="AI-powered analysis to predict failures and suggest proactive actions." />
+            <FeatureCard icon={Bot} title="AI Recommendations" description="Get smart recommendations for optimal sensor thresholds based on historical data." />
+          </div>
+        </div>
+      </section>
+
+      <section id="testimonials" className="py-20">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="text-center mb-12">
+                  <h2 className="text-3xl md:text-4xl font-bold font-headline">Trusted by Industry Leaders</h2>
+                  <p className="mt-2 text-muted-foreground">See how companies like yours are preventing downtime and saving costs.</p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  <TestimonialCard
+                      quote="SensoGuard has transformed our maintenance schedule. We've cut unplanned downtime by 60% and can finally be proactive instead of reactive."
+                      name="John Doe"
+                      title="Operations Manager, Acme Inc."
+                      avatarUrl="https://i.pravatar.cc/150?u=a042581f4e29026704d"
+                  />
+                  <TestimonialCard
+                      quote="The predictive capabilities are a game-changer. We caught a critical bearing failure two weeks before it was due to happen, saving us over $100,000."
+                      name="Jane Smith"
+                      title="Lead Engineer, Stark Industries"
+                      avatarUrl="https://i.pravatar.cc/150?u=a042581f4e29026704e"
+                  />
+                  <TestimonialCard
+                      quote="As a small manufacturer, we can't afford downtime. SensoGuard is affordable, easy to set up, and has given us peace of mind."
+                      name="Mike Ross"
+                      title="Owner, Ross Manufacturing"
+                      avatarUrl="https://i.pravatar.cc/150?u=a042581f4e29026704f"
+                  />
+              </div>
+          </div>
+      </section>
+
+      <section id="cta" className="py-20 bg-background">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="bg-primary text-primary-foreground rounded-lg p-10 lg:p-16 text-center">
+                  <h2 className="text-3xl md:text-4xl font-bold font-headline">Ready to Prevent Your Next Failure?</h2>
+                  <p className="mt-4 max-w-2xl mx-auto text-lg">
+                      Stop reacting and start predicting. Get started with SensoGuard today and gain full control over your equipment's health.
+                  </p>
+                  <div className="mt-8">
+                      <Button size="lg" variant="secondary" asChild className="text-primary hover:bg-white/90">
+                         <Link href="/signup">Start Your Free Trial</Link>
+                      </Button>
+                  </div>
+              </div>
+          </div>
+      </section>
+    </>
   );
 }
 
