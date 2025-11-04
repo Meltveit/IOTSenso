@@ -5,6 +5,18 @@
       "description": "A modern factory floor with automated machinery and sensor displays.",
       "imageUrl": "https://images.unsplash.com/photo-1543304376-1ae7c2be5e59?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxtb2Rlcm4lMjBmYWN0b3J5fGVufDB8fHx8MTc2MjE3MjIwOXww&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "modern factory"
+    },
+    {
+      "id": "problem",
+      "description": "A broken piece of industrial equipment causing a shutdown.",
+      "imageUrl": "https://images.unsplash.com/photo-1731391747629-fbcba9014453?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxicm9rZW4lMjBlcXVpcG1lbnR8ZW58MHx8fHwxNzYyMjg4OTU5fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "broken equipment"
+    },
+    {
+      "id": "solution",
+      "description": "An engineer using a tablet to check sensor data on a machine.",
+      "imageUrl": "https://images.unsplash.com/photo-1748609523112-da78cb7210a2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxlbmdpbmVlciUyMHRhYmxldHxlbnwwfHx8fDE3NjIyODg5NTl8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "engineer tablet"
     }
   ]
 }

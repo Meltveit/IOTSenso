@@ -1,12 +1,14 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle, Shield, TrendingUp, Zap } from "lucide-react";
+import { CheckCircle, Shield, TrendingUp, Zap, ServerCrash, Bot } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { SensoGuardLogo } from "@/components/icons";
+import { SensoGuardLogo, Solution } from "@/components/icons";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 
 const heroImage = PlaceHolderImages.find(p => p.id === "hero");
+const problemImage = PlaceHolderImages.find(p => p.id === "problem");
+const solutionImage = PlaceHolderImages.find(p => p.id === "solution");
 
 export default function Home() {
   return (
@@ -93,6 +95,88 @@ export default function Home() {
             </div>
           </div>
         </section>
+        
+        <section id="problem" className="bg-secondary py-20">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="grid md:grid-cols-2 gap-8 lg:gap-16 items-center">
+              <div>
+                <h2 className="text-3xl font-bold font-headline">The Hidden Costs of Unmonitored Equipment</h2>
+                <p className="mt-4 text-muted-foreground">
+                  Unexpected equipment failure can lead to costly downtime, emergency repairs, and significant production losses. Reactive maintenance is no longer enough in today's competitive landscape.
+                </p>
+                <ul className="mt-6 space-y-4">
+                  <li className="flex items-start gap-3">
+                    <ServerCrash className="h-6 w-6 text-destructive mt-1 flex-shrink-0" />
+                    <div>
+                      <h3 className="font-semibold">Costly Downtime</h3>
+                      <p className="text-sm text-muted-foreground">Every minute of downtime impacts your bottom line.</p>
+                    </div>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <ServerCrash className="h-6 w-6 text-destructive mt-1 flex-shrink-0" />
+                    <div>
+                      <h3 className="font-semibold">Unexpected Failures</h3>
+                      <p className="text-sm text-muted-foreground">Failures disrupt operations and damage your reputation.</p>
+                    </div>
+                  </li>
+                </ul>
+              </div>
+               <div className="rounded-lg overflow-hidden shadow-2xl">
+                {problemImage && (
+                  <Image
+                    src={problemImage.imageUrl}
+                    alt={problemImage.description}
+                    width={600}
+                    height={400}
+                    className="w-full h-auto object-cover"
+                    data-ai-hint={problemImage.imageHint}
+                  />
+                )}
+              </div>
+            </div>
+          </div>
+        </section>
+        
+        <section id="solution" className="py-20">
+           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="grid md:grid-cols-2 gap-8 lg:gap-16 items-center">
+               <div className="rounded-lg overflow-hidden shadow-2xl md:order-2">
+                {solutionImage && (
+                  <Image
+                    src={solutionImage.imageUrl}
+                    alt={solutionImage.description}
+                    width={600}
+                    height={400}
+                    className="w-full h-auto object-cover"
+                    data-ai-hint={solutionImage.imageHint}
+                  />
+                )}
+              </div>
+              <div className="md:order-1">
+                <h2 className="text-3xl font-bold font-headline">From Reactive to Predictive with SensoGuard</h2>
+                <p className="mt-4 text-muted-foreground">
+                  SensoGuard transforms your maintenance strategy. Our AI-powered platform analyzes sensor data in real-time to predict potential failures, allowing you to perform maintenance before critical issues occur.
+                </p>
+                <ul className="mt-6 space-y-4">
+                  <li className="flex items-start gap-3">
+                    <Bot className="h-6 w-6 text-primary mt-1 flex-shrink-0" />
+                    <div>
+                      <h3 className="font-semibold">AI-Powered Predictions</h3>
+                      <p className="text-sm text-muted-foreground">Our algorithms learn from your data to provide accurate failure forecasts.</p>
+                    </div>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <Solution className="h-6 w-6 text-primary mt-1 flex-shrink-0" />
+                    <div>
+                      <h3 className="font-semibold">Actionable Insights</h3>
+                      <p className="text-sm text-muted-foreground">Receive clear, actionable recommendations for proactive maintenance.</p>
+                    </div>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
 
         <section className="bg-secondary py-20">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -110,9 +194,54 @@ export default function Home() {
         </section>
       </main>
 
-      <footer className="bg-background border-t">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 text-center text-muted-foreground">
-          <p>&copy; {new Date().getFullYear()} SensoGuard. All rights reserved.</p>
+      <footer className="bg-card border-t">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
+                <div className="col-span-2 md:col-span-1">
+                     <Link href="/" className="flex items-center gap-2">
+                        <SensoGuardLogo className="h-8 w-8 text-primary" />
+                        <span className="text-xl font-bold font-headline text-foreground">
+                            SensoGuard
+                        </span>
+                    </Link>
+                    <p className="text-sm text-muted-foreground mt-4">Proactive sensor monitoring to protect your assets.</p>
+                </div>
+                <div>
+                    <h4 className="font-headline font-semibold">Product</h4>
+                    <ul className="mt-4 space-y-2 text-sm">
+                        <li><Link href="/features" className="text-muted-foreground hover:text-foreground">Features</Link></li>
+                        <li><Link href="/pricing" className="text-muted-foreground hover:text-foreground">Pricing</Link></li>
+                        <li><Link href="/how-it-works" className="text-muted-foreground hover:text-foreground">How it Works</Link></li>
+                         <li><Link href="/dashboard" className="text-muted-foreground hover:text-foreground">Demo</Link></li>
+                    </ul>
+                </div>
+                 <div>
+                    <h4 className="font-headline font-semibold">Company</h4>
+                    <ul className="mt-4 space-y-2 text-sm">
+                        <li><Link href="/about-us" className="text-muted-foreground hover:text-foreground">About Us</Link></li>
+                        <li><Link href="/contact" className="text-muted-foreground hover:text-foreground">Contact</Link></li>
+                        <li><Link href="/blog" className="text-muted-foreground hover:text-foreground">Blog</Link></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 className="font-headline font-semibold">Resources</h4>
+                    <ul className="mt-4 space-y-2 text-sm">
+                        <li><Link href="/docs" className="text-muted-foreground hover:text-foreground">Documentation</Link></li>
+                        <li><Link href="/support" className="text-muted-foreground hover:text-foreground">Support</Link></li>
+                         <li><Link href="/api-status" className="text-muted-foreground hover:text-foreground">API Status</Link></li>
+                    </ul>
+                </div>
+                 <div>
+                    <h4 className="font-headline font-semibold">Legal</h4>
+                    <ul className="mt-4 space-y-2 text-sm">
+                        <li><Link href="/privacy" className="text-muted-foreground hover:text-foreground">Privacy Policy</Link></li>
+                        <li><Link href="/terms" className="text-muted-foreground hover:text-foreground">Terms of Service</Link></li>
+                    </ul>
+                </div>
+            </div>
+             <div className="mt-8 border-t pt-6 text-center text-sm text-muted-foreground">
+                <p>&copy; {new Date().getFullYear()} SensoGuard. All rights reserved.</p>
+            </div>
         </div>
       </footer>
     </div>
