@@ -25,7 +25,6 @@ import { SensoLogo } from "../icons";
 const navItems = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
   { href: "/sensors", icon: Thermometer, label: "Sensors" },
-  { href: "/manage-products", icon: ShoppingBag, label: "Manage Products" },
   { href: "/alerts", icon: Bell, label: "Alerts" },
   { href: "/analytics", icon: BarChart2, label: "Analytics" },
 ];

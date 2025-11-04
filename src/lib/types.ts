@@ -108,15 +108,18 @@ export interface Alert {
 export interface Product {
   id: string;
   name: string;
+  subtitle: string;
   type: SensorType;
   description: string;
-  specs: {
-    maxRange: string;
-    batteryLife: string;
-    communication: string;
-    ipRating: string;
-  };
-  price: number; // Engangskostnad
+  purpose: string[];
+  howItWorks: string;
+  specs: Record<string, string>;
+  useCases: string[];
+  importantFor: string[];
+  costSavings: Record<string, string>;
+  repaymentTime: string;
+  uniqueBenefits: string[];
+  price: number;
   monthlyFee: number;
   imageUrl?: string;
   imageHint?: string;
