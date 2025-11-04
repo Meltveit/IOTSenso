@@ -1,21 +1,13 @@
-import Link from "next/link";
 import {
   SidebarProvider,
   Sidebar,
   SidebarInset,
-  SidebarTrigger,
-  Sheet,
-  SheetContent,
-  SheetTrigger,
 } from "@/components/ui/sidebar";
 import SidebarNav from "@/components/main/SidebarNav";
-import { SensoGuardLogo } from "@/components/icons";
 import UserNav from "@/components/main/UserNav";
 import PageHeader from "@/components/PageHeader";
-import { Button } from "@/components/ui/button";
-import { PanelLeft } from "lucide-react";
-import { useIsMobile } from "@/hooks/use-mobile";
 import MobileSidebar from "@/components/main/MobileSidebar";
+import ClientOnly from "@/components/ClientOnly";
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
 
@@ -27,7 +19,9 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
         </Sidebar>
         <SidebarInset className="bg-secondary/50 flex flex-col">
           <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background/80 backdrop-blur-sm px-4 md:px-6">
-            <MobileSidebar />
+            <ClientOnly>
+                <MobileSidebar />
+            </ClientOnly>
             <div className="flex-1">
               <PageHeader />
             </div>
