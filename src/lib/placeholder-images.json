@@ -1,3 +1,10 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "hero",
+      "description": "A modern factory floor with automated machinery and sensor displays.",
+      "imageUrl": "https://images.unsplash.com/photo-1543304376-1ae7c2be5e59?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxtb2Rlcm4lMjBmYWN0b3J5fGVufDB8fHx8MTc2MjE3MjIwOXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "modern factory"
+    }
+  ]
 }
