@@ -15,25 +15,36 @@ import { Label } from '@/components/ui/label';
 import { SensoLogo } from '@/components/icons';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useAuth, useUser } from '@/firebase';
-import { initiateEmailSignIn } from '@/firebase/non-blocking-login';
+import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
-  const auth = useAuth();
-  const { user, isUserLoading } = useUser();
+  const { login, user, loading } = useAuth();
   const { toast } = useToast();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    initiateEmailSignIn(auth, email, password);
+    setIsSubmitting(true);
+    try {
+      await login(email, password);
+      router.push('/dashboard');
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Login Failed',
+        description: error.message,
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  if (isUserLoading) {
+  if (loading) {
     return <Loader2 className="animate-spin" />;
   }
 
@@ -64,6 +75,7 @@ export default function LoginPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              disabled={isSubmitting}
             />
           </div>
           <div className="grid gap-2">
@@ -74,11 +86,13 @@ export default function LoginPage() {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              disabled={isSubmitting}
             />
           </div>
         </CardContent>
         <CardFooter className="flex flex-col gap-4">
-          <Button className="w-full" type="submit">
+          <Button className="w-full" type="submit" disabled={isSubmitting}>
+            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Login
           </Button>
           <div className="text-center text-sm">

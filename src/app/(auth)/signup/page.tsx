@@ -15,67 +15,48 @@ import { Label } from '@/components/ui/label';
 import { SensoLogo } from '@/components/icons';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useAuth, useUser, useFirestore, setDocumentNonBlocking } from '@/firebase';
-import { doc, serverTimestamp } from 'firebase/firestore';
-import {
-  createUserWithEmailAndPassword,
-  updateProfile,
-} from 'firebase/auth';
+import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
-import type { User as AuthUser } from 'firebase/auth';
-import type { User } from '@/lib/types';
+import type { PrivateUser } from '@/lib/types';
 
 
 export default function SignupPage() {
   const router = useRouter();
-  const auth = useAuth();
-  const firestore = useFirestore();
-  const { user, isUserLoading } = useUser();
+  const { signup, user, loading } = useAuth();
   const { toast } = useToast();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
+    
     try {
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        email,
-        password
-      );
-      const authUser = userCredential.user;
+        const userData: Partial<PrivateUser> = {
+            accountType: 'private',
+            firstName,
+            lastName,
+            email,
+        };
 
-      await updateProfile(authUser, {
-        displayName: `${firstName} ${lastName}`,
-      });
-
-      const userDoc: User = {
-        id: authUser.uid,
-        firstName,
-        lastName,
-        email,
-        phone: '',
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      };
-
-      const userDocRef = doc(firestore, 'users', authUser.uid);
-      setDocumentNonBlocking(userDocRef, userDoc, { merge: true });
-
-      router.push('/dashboard');
+        await signup(email, password, userData);
+        router.push('/dashboard');
     } catch (error: any) {
       toast({
         variant: 'destructive',
         title: 'Sign-up Failed',
         description: error.message,
       });
+    } finally {
+        setIsSubmitting(false);
     }
   };
   
-  if (isUserLoading) {
+  if (loading) {
     return <Loader2 className="animate-spin" />;
   }
 
@@ -108,6 +89,7 @@ export default function SignupPage() {
                 required
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
+                disabled={isSubmitting}
               />
             </div>
             <div className="grid gap-2">
@@ -118,6 +100,7 @@ export default function SignupPage() {
                 required
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
+                disabled={isSubmitting}
               />
             </div>
           </div>
@@ -130,6 +113,7 @@ export default function SignupPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              disabled={isSubmitting}
             />
           </div>
           <div className="grid gap-2">
@@ -140,11 +124,13 @@ export default function SignupPage() {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              disabled={isSubmitting}
             />
           </div>
         </CardContent>
         <CardFooter className="flex flex-col gap-4">
-          <Button className="w-full" type="submit">
+          <Button className="w-full" type="submit" disabled={isSubmitting}>
+            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Create Account
           </Button>
           <div className="text-center text-sm">

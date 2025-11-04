@@ -3,7 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { Toaster } from "@/components/ui/toaster";
-import { FirebaseClientProvider } from "@/firebase/client-provider";
+import { AuthProvider } from "@/contexts/AuthContext";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
@@ -30,9 +30,9 @@ export default function RootLayout({
           inter.variable
         )}
       >
-        <FirebaseClientProvider>
+        <AuthProvider>
           {children}
-        </FirebaseClientProvider>
+        </AuthProvider>
         <Toaster />
       </body>
     </html>
