@@ -12,14 +12,14 @@ export default function PublicLayout({
         <div className="flex flex-col min-h-screen bg-secondary/50">
             <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
                 <div className="container mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-                <Link href="/" className="flex items-center gap-2">
+                <Link href="/home" className="flex items-center gap-2">
                     <SensoGuardLogo className="h-8 w-8 text-primary" />
                     <span className="text-xl font-bold font-headline text-foreground">
                     SensoGuard
                     </span>
                 </Link>
                 <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
-                    <Link href="/" className="text-foreground font-semibold hover:text-foreground/80 transition-colors">Home</Link>
+                    <Link href="/home" className="text-foreground font-semibold hover:text-foreground/80 transition-colors">Home</Link>
                     <Link href="/products" className="text-muted-foreground hover:text-foreground transition-colors">Products</Link>
                 </nav>
                 <div className="flex items-center gap-2">
@@ -46,7 +46,7 @@ export default function PublicLayout({
                 <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
                     <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
                         <div className="col-span-2 md:col-span-2">
-                            <Link href="/" className="flex items-center gap-2">
+                            <Link href="/home" className="flex items-center gap-2">
                                 <SensoGuardLogo className="h-8 w-8 text-primary" />
                                 <span className="text-xl font-bold font-headline text-foreground">
                                     SensoGuard

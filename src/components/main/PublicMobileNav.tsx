@@ -18,13 +18,13 @@ export default function PublicMobileNav() {
             </SheetTrigger>
             <SheetContent side="left" className="sm:max-w-xs p-0">
                  <div className="flex h-16 items-center justify-center border-b">
-                    <Link href="/" className="flex items-center gap-2 font-bold font-headline" onClick={() => setIsOpen(false)}>
+                    <Link href="/home" className="flex items-center gap-2 font-bold font-headline" onClick={() => setIsOpen(false)}>
                         <SensoGuardLogo className="h-6 w-6 text-primary" />
                         <span className="text-lg">SensoGuard</span>
                     </Link>
                 </div>
                 <div className="p-4 flex flex-col gap-4">
-                    <Link href="/" className="text-foreground font-semibold hover:text-foreground/80 transition-colors" onClick={() => setIsOpen(false)}>Home</Link>
+                    <Link href="/home" className="text-foreground font-semibold hover:text-foreground/80 transition-colors" onClick={() => setIsOpen(false)}>Home</Link>
                     <Link href="/products" className="text-muted-foreground hover:text-foreground transition-colors" onClick={() => setIsOpen(false)}>Products</Link>
                     <hr/>
                     <Button variant="ghost" asChild>
