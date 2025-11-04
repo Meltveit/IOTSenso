@@ -30,8 +30,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [userData, setUserData] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser);
       
@@ -41,10 +48,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             if (userDoc.exists()) {
               const data = userDoc.data();
               
-              // Konverter Firestore Timestamp til Date hvis nødvendig
               const userData: User = {
                 ...data,
-                createdAt: data.createdAt, // Timestamp
+                createdAt: data.createdAt, 
               } as User;
               
               setUserData(userData);
@@ -61,7 +67,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     return unsubscribe;
-  }, []);
+  }, [mounted]);
 
   const login = async (email: string, password: string) => {
     await signInWithEmailAndPassword(auth, email, password);
@@ -75,7 +81,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const uid = userCredential.user.uid;
 
-    // Save user data to Firestore
     await setDoc(doc(db, 'users', uid), {
       ...newUserData,
       userId: uid,
@@ -97,7 +102,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await sendPasswordResetEmail(auth, email);
   };
 
-  if (loading) {
+  if (!mounted) {
     return (
         <div className="flex h-screen items-center justify-center">
             <Loader2 className="h-8 w-8 animate-spin" />

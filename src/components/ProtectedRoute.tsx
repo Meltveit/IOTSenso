@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
@@ -8,14 +8,19 @@ import { Loader2 } from 'lucide-react';
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    if (!loading && !user) {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!loading && !user && mounted) {
       router.push('/login');
     }
-  }, [user, loading, router]);
+  }, [user, loading, router, mounted]);
 
-  if (loading) {
+  if (!mounted || loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
