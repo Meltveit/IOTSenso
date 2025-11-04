@@ -1,3 +1,5 @@
+import { FieldValue } from "firebase/firestore";
+
 export type SensorDataPoint = {
   timestamp: Date;
   value: number;
@@ -45,3 +47,13 @@ export type Product = {
     monthly: number;
   };
 };
+
+export type User = {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    createdAt?: FieldValue;
+    updatedAt?: FieldValue;
+}
