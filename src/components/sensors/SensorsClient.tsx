@@ -117,50 +117,57 @@ export default function SensorsClient({ sensors }: { sensors: Sensor[] }) {
         </Dialog>
       </CardHeader>
       <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Location</TableHead>
-              <TableHead>
-                <span className="sr-only">Actions</span>
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {sensors.map((sensor) => (
-              <TableRow key={sensor.id} className="cursor-pointer" onClick={() => router.push(`/sensors/${sensor.id}`)}>
-                <TableCell className="font-medium">{sensor.name}</TableCell>
-                <TableCell>
-                  <Badge variant="outline" className={cn(statusColors[sensor.status])}>
-                    {sensor.status}
-                  </Badge>
-                </TableCell>
-                <TableCell>{sensor.type}</TableCell>
-                <TableCell>{sensor.location}</TableCell>
-                <TableCell>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button aria-haspopup="true" size="icon" variant="ghost">
-                        <MoreHorizontal className="h-4 w-4" />
-                        <span className="sr-only">Toggle menu</span>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); router.push(`/sensors/${sensor.id}`)}}>View Details</DropdownMenuItem>
-                      <DropdownMenuItem onClick={(e) => e.stopPropagation()}>Edit</DropdownMenuItem>
-                      <DropdownMenuItem className="text-destructive" onClick={(e) => e.stopPropagation()}>
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
+        {sensors.length > 0 ? (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead>Location</TableHead>
+                <TableHead>
+                  <span className="sr-only">Actions</span>
+                </TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {sensors.map((sensor) => (
+                <TableRow key={sensor.id} className="cursor-pointer" onClick={() => router.push(`/sensors/${sensor.id}`)}>
+                  <TableCell className="font-medium">{sensor.name}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className={cn(statusColors[sensor.status])}>
+                      {sensor.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>{sensor.type}</TableCell>
+                  <TableCell>{sensor.location}</TableCell>
+                  <TableCell>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button aria-haspopup="true" size="icon" variant="ghost" onClick={(e) => e.stopPropagation()}>
+                          <MoreHorizontal className="h-4 w-4" />
+                          <span className="sr-only">Toggle menu</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); router.push(`/sensors/${sensor.id}`)}}>View Details</DropdownMenuItem>
+                        <DropdownMenuItem onClick={(e) => e.stopPropagation()}>Edit</DropdownMenuItem>
+                        <DropdownMenuItem className="text-destructive" onClick={(e) => e.stopPropagation()}>
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        ) : (
+          <div className="text-center py-16 text-muted-foreground">
+            <p className="font-semibold">No sensors found</p>
+            <p>Click "Add Sensor" to get started.</p>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

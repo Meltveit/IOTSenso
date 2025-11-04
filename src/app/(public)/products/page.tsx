@@ -1,9 +1,9 @@
 import ProductsClient from "@/components/products/ProductsClient";
-import { mockProducts } from "@/lib/data";
+import type { Product } from "@/lib/types";
 
 export default function ProductsPage() {
   // In a real app, you would fetch this data from your API
-  const products = mockProducts;
+  const products: Product[] = [];
 
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">

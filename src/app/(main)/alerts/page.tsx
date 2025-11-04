@@ -1,4 +1,3 @@
-import { mockAlerts } from "@/lib/data";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -14,9 +13,10 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button";
 import { ListFilter } from "lucide-react";
+import type { Alert } from "@/lib/types";
 
 export default function AlertsPage() {
-    const alerts = mockAlerts;
+    const alerts: Alert[] = [];
     const statusColors = {
         warning: 'bg-accent text-accent-foreground',
         critical: 'bg-destructive text-destructive-foreground',
@@ -53,6 +53,7 @@ export default function AlertsPage() {
                 </div>
             </CardHeader>
             <CardContent>
+              {alerts.length > 0 ? (
                 <Table>
                     <TableHeader>
                         <TableRow>
@@ -77,6 +78,12 @@ export default function AlertsPage() {
                         ))}
                     </TableBody>
                 </Table>
+              ) : (
+                <div className="text-center py-16 text-muted-foreground">
+                  <p className="font-semibold">No alerts found</p>
+                  <p>All systems are operating normally.</p>
+                </div>
+              )}
             </CardContent>
         </Card>
     );
