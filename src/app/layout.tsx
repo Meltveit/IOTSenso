@@ -4,6 +4,7 @@ import "./globals.css";
 import { cn } from "@/lib/utils";
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { FirebaseClientProvider } from "@/firebase";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
@@ -18,7 +19,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="no" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -30,9 +31,11 @@ export default function RootLayout({
           inter.variable
         )}
       >
-        <AuthProvider>
-          {children}
-        </AuthProvider>
+        <FirebaseClientProvider>
+            <AuthProvider>
+            {children}
+            </AuthProvider>
+        </FirebaseClientProvider>
         <Toaster />
       </body>
     </html>
