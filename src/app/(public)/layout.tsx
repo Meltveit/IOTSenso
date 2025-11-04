@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { SensoGuardLogo } from "@/components/icons";
+import PublicMobileNav from "@/components/main/PublicMobileNav";
 
 export default function PublicLayout({
     children,
@@ -21,13 +22,18 @@ export default function PublicLayout({
                     <Link href="/" className="text-foreground font-semibold hover:text-foreground/80 transition-colors">Home</Link>
                     <Link href="/products" className="text-muted-foreground hover:text-foreground transition-colors">Products</Link>
                 </nav>
-                <div className="flex items-center gap-4">
-                    <Button variant="ghost" asChild>
-                    <Link href="/login">Login</Link>
-                    </Button>
-                    <Button asChild>
-                    <Link href="/signup">Get Started Here</Link>
-                    </Button>
+                <div className="flex items-center gap-2">
+                    <div className="hidden md:flex items-center gap-2">
+                        <Button variant="ghost" asChild>
+                        <Link href="/login">Login</Link>
+                        </Button>
+                        <Button asChild>
+                        <Link href="/signup">Get Started Here</Link>
+                        </Button>
+                    </div>
+                    <div className="md:hidden">
+                        <PublicMobileNav />
+                    </div>
                 </div>
                 </div>
             </header>
