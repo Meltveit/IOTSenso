@@ -1,0 +1,151 @@
+/**
+ * @fileoverview Firestore Security Rules for the SensoGuard application.
+ *
+ * Core Philosophy:
+ * This ruleset enforces a strict user-ownership model. Each user has complete control over their data,
+ * and no user can access another user's data. The rules are designed to be simple and easy to understand,
+ * prioritizing security and maintainability.
+ *
+ * Data Structure:
+ * All data is nested under /users/{userId}. This includes sensors, sensor data, alerts,
+ * predictive maintenance records, and reports. This hierarchical structure ensures that all data
+ * is associated with a specific user and simplifies the security rules.
+ *
+ * Key Security Decisions:
+ * - Users can only access their own data.
+ * - Data types are not validated in this prototyping phase, focusing on authorization.
+ * - List operations are restricted to the owner of the data.
+ * - Write operations are strictly controlled and require user authentication.
+ *
+ * Denormalization for Authorization:
+ * The `userId` is present in each document to avoid costly `get()` calls and enforce ownership.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * @description Checks if the current user is signed in.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * @description Checks if the requesting user is the owner of the resource.
+     */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /**
+     * @description Checks if the requesting user is the owner of the existing resource.
+     * @details Used for update and delete operations to ensure the document exists and is owned by the user.
+     */
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource != null;
+    }
+
+    /**
+     * @description Rules for the /users/{userId} collection.
+     * @path /users/{userId}
+     * @allow (create) - A user can create their own user document if the userId matches their auth.uid.
+     * @allow (get, update, delete) - A user can only access their own user document.
+     * @deny (create) - A user cannot create a user document for another user.
+     * @deny (update, delete) - A user cannot modify or delete another user's user document.
+     * @principle Enforces document ownership for all operations.
+     */
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow list: if false; // Listing users is not permitted.
+      allow create: if isOwner(userId) && request.resource.data.id == request.auth.uid;
+      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id; // Enforce immutability of userId
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Rules for the /users/{userId}/sensors/{sensorId} collection.
+     * @path /users/{userId}/sensors/{sensorId}
+     * @allow (create) - A user can create a sensor under their user document.
+     * @allow (get, update, delete) - A user can only access their own sensors.
+     * @deny (create) - A user cannot create a sensor for another user.
+     * @deny (update, delete) - A user cannot modify or delete another user's sensor.
+     * @principle Enforces document ownership for all operations.
+     */
+    match /users/{userId}/sensors/{sensorId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Rules for the /users/{userId}/sensors/{sensorId}/sensorData/{sensorDataId} collection.
+     * @path /users/{userId}/sensors/{sensorId}/sensorData/{sensorDataId}
+     * @allow (create) - A user can create sensor data under their sensor.
+     * @allow (get, update, delete) - A user can only access their own sensor data.
+     * @deny (create) - A user cannot create sensor data for another user's sensor.
+     * @deny (update, delete) - A user cannot modify or delete another user's sensor data.
+     * @principle Enforces document ownership for all operations.
+     */
+    match /users/{userId}/sensors/{sensorId}/sensorData/{sensorDataId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.sensorId == sensorId;
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Rules for the /users/{userId}/alerts/{alertId} collection.
+     * @path /users/{userId}/alerts/{alertId}
+     * @allow (create) - A user can create an alert under their user document.
+     * @allow (get, update, delete) - A user can only access their own alerts.
+     * @deny (create) - A user cannot create an alert for another user.
+     * @deny (update, delete) - A user cannot modify or delete another user's alert.
+     * @principle Enforces document ownership for all operations.
+     */
+    match /users/{userId}/alerts/{alertId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Rules for the /users/{userId}/predictiveMaintenance/{predictiveMaintenanceId} collection.
+     * @path /users/{userId}/predictiveMaintenance/{predictiveMaintenanceId}
+     * @allow (create) - A user can create a predictive maintenance record under their user document.
+     * @allow (get, update, delete) - A user can only access their own predictive maintenance records.
+     * @deny (create) - A user cannot create a predictive maintenance record for another user.
+     * @deny (update, delete) - A user cannot modify or delete another user's predictive maintenance record.
+     * @principle Enforces document ownership for all operations.
+     */
+    match /users/{userId}/predictiveMaintenance/{predictiveMaintenanceId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Rules for the /users/{userId}/reports/{reportId} collection.
+     * @path /users/{userId}/reports/{reportId}
+     * @allow (create) - A user can create a report under their user document.
+     * @allow (get, update, delete) - A user can only access their own reports.
+     * @deny (create) - A user cannot create a report for another user.
+     * @deny (update, delete) - A user cannot modify or delete another user's report.
+     * @principle Enforces document ownership for all operations.
+     */
+    match /users/{userId}/reports/{reportId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow delete: if isExistingOwner(userId);
+    }
+  }
+}
