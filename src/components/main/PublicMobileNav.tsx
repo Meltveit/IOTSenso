@@ -27,6 +27,7 @@ export default function PublicMobileNav() {
                     <Link href="/home" className="text-foreground font-semibold hover:text-foreground/80 transition-colors" onClick={() => setIsOpen(false)}>Home</Link>
                     <Link href="/products" className="text-muted-foreground hover:text-foreground transition-colors" onClick={() => setIsOpen(false)}>Products</Link>
                     <Link href="/about-us" className="text-muted-foreground hover:text-foreground transition-colors" onClick={() => setIsOpen(false)}>About Us</Link>
+                    <Link href="/how-it-works" className="text-muted-foreground hover:text-foreground transition-colors" onClick={() => setIsOpen(false)}>How It Works</Link>
                     <hr/>
                     <Button variant="ghost" asChild>
                         <Link href="/login" onClick={() => setIsOpen(false)}>Login</Link>

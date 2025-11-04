@@ -22,6 +22,7 @@ export default function PublicLayout({
                     <Link href="/home" className="text-foreground font-semibold hover:text-foreground/80 transition-colors">Home</Link>
                     <Link href="/products" className="text-muted-foreground hover:text-foreground transition-colors">Products</Link>
                     <Link href="/about-us" className="text-muted-foreground hover:text-foreground transition-colors">About Us</Link>
+                    <Link href="/how-it-works" className="text-muted-foreground hover:text-foreground transition-colors">How It Works</Link>
                 </nav>
                 <div className="flex items-center gap-2">
                     <div className="hidden md:flex items-center gap-2">
@@ -59,7 +60,7 @@ export default function PublicLayout({
                             <h4 className="font-headline font-semibold">Product</h4>
                             <ul className="mt-4 space-y-2 text-sm">
                                 <li><Link href="#features" className="text-muted-foreground hover:text-foreground">Features</Link></li>
-                                <li><Link href="#solution" className="text-muted-foreground hover:text-foreground">How it Works</Link></li>
+                                <li><Link href="/how-it-works" className="text-muted-foreground hover:text-foreground">How it Works</Link></li>
                                 <li><Link href="/dashboard" className="text-muted-foreground hover:text-foreground">Demo</Link></li>
                             </ul>
                         </div>
