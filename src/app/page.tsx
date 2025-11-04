@@ -21,16 +21,15 @@ export default function Home() {
             </span>
           </Link>
           <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
-             <Link href="#problem" className="text-muted-foreground hover:text-foreground transition-colors">Problem</Link>
-             <Link href="#solution" className="text-muted-foreground hover:text-foreground transition-colors">How it works</Link>
-             <Link href="#features" className="text-muted-foreground hover:text-foreground transition-colors">Features</Link>
+             <Link href="/" className="text-foreground font-semibold hover:text-foreground/80 transition-colors">Home</Link>
+             <Link href="/products" className="text-muted-foreground hover:text-foreground transition-colors">Products</Link>
           </nav>
           <div className="flex items-center gap-4">
             <Button variant="ghost" asChild>
               <Link href="/login">Login</Link>
             </Button>
             <Button asChild>
-              <Link href="/signup">Get Started Free</Link>
+              <Link href="/signup">Get Started Here</Link>
             </Button>
           </div>
         </div>
