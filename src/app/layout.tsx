@@ -3,6 +3,7 @@ import "./globals.css";
 import { cn } from "@/lib/utils";
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "@/contexts/AuthContext";
+import ClientOnly from "@/components/ClientOnly";
 
 import { Inter } from "next/font/google";
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
@@ -31,9 +32,11 @@ export default function RootLayout({
           inter.variable
         )}
       >
-        <AuthProvider>
-            {children}
-        </AuthProvider>
+        <ClientOnly>
+          <AuthProvider>
+              {children}
+          </AuthProvider>
+        </ClientOnly>
         <Toaster />
       </body>
     </html>
