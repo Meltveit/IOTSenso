@@ -1,4 +1,4 @@
-import type { Sensor, Alert } from './types';
+import type { Sensor, Alert, Product } from './types';
 
 const now = new Date();
 
@@ -89,5 +89,52 @@ export const mockAlerts: Alert[] = [
         type: 'warning',
         value: 86,
         timestamp: new Date(now.getTime() - 5 * 60 * 60 * 1000),
+    }
+];
+
+export const mockProducts: Product[] = [
+    {
+        id: 'prod-001',
+        name: 'SensoGuard Starter Kit',
+        type: 'Starter Kit',
+        description: 'Perfect for small operations, this kit includes everything you need to monitor up to 5 critical assets.',
+        imageUrl: 'https://picsum.photos/seed/p1/600/400',
+        imageHint: "sensor kit",
+        rating: 4,
+        specs: ['5 Multi-Sensors (T, H, P, V)', '1 Gateway Hub', '1 Year Basic Plan', 'Email & SMS Alerts'],
+        price: { once: 499, monthly: 19 }
+    },
+    {
+        id: 'prod-002',
+        name: 'SensoGuard Professional',
+        type: 'Professional',
+        description: 'Our most popular package for growing businesses, with advanced analytics and broader sensor compatibility.',
+        imageUrl: 'https://picsum.photos/seed/p2/600/400',
+        imageHint: "professional sensors",
+        rating: 5,
+        specs: ['20 Multi-Sensors', '2 Gateway Hubs', 'AI Predictive Maintenance', 'Advanced Analytics Dashboard'],
+        price: { once: 1999, monthly: 79 }
+    },
+    {
+        id: 'prod-003',
+        name: 'SensoGuard Enterprise',
+        type: 'Enterprise',
+        description: 'A complete solution for large-scale industrial monitoring with unlimited sensors and dedicated support.',
+        imageUrl: 'https://picsum.photos/seed/p3/600/400',
+        imageHint: "industrial sensors",
+        rating: 5,
+        specs: ['Unlimited Sensors', 'Scalable Gateway Infrastructure', 'Dedicated Account Manager', 'API Access & Integrations'],
+        price: { once: 9999, monthly: 299 }
+    },
+     {
+        id: 'prod-004',
+        name: 'Sensor Node - Add-on',
+        type: 'Starter Kit',
+        description: 'Expand your existing Starter Kit with an additional multi-sensor node.',
+        imageUrl: 'https://picsum.photos/seed/p4/600/400',
+        imageHint: "single sensor",
+        rating: 4,
+        specs: ['1 Multi-Sensor (T, H, P, V)', '5-Year Battery Life', 'Easy Integration'],
+        price: { once: 99, monthly: 5 }
     }
 ];

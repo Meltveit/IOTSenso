@@ -18,12 +18,14 @@ import {
   BarChart2,
   Settings,
   HelpCircle,
+  ShoppingBag,
 } from "lucide-react";
 import { SensoGuardLogo } from "../icons";
 
 const navItems = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
   { href: "/sensors", icon: Thermometer, label: "Sensors" },
+  { href: "/products", icon: ShoppingBag, label: "Products" },
   { href: "/alerts", icon: Bell, label: "Alerts" },
   { href: "/analytics", icon: BarChart2, label: "Analytics" },
 ];

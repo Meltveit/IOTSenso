@@ -30,3 +30,18 @@ export type Alert = {
   value: number;
   timestamp: Date;
 };
+
+export type Product = {
+  id: string;
+  name: string;
+  type: 'Starter Kit' | 'Professional' | 'Enterprise';
+  description: string;
+  imageUrl: string;
+  imageHint: string;
+  rating: number;
+  specs: string[];
+  price: {
+    once: number;
+    monthly: number;
+  };
+};
