@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "@/contexts/AuthContext";
-import { FirebaseClientProvider } from "@/firebase";
 
+import { Inter } from "next/font/google";
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
+
 
 export const metadata: Metadata = {
   title: "SENSO",
@@ -31,11 +31,9 @@ export default function RootLayout({
           inter.variable
         )}
       >
-        <FirebaseClientProvider>
-            <AuthProvider>
+        <AuthProvider>
             {children}
-            </AuthProvider>
-        </FirebaseClientProvider>
+        </AuthProvider>
         <Toaster />
       </body>
     </html>

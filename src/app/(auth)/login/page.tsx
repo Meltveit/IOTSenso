@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -14,14 +16,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { SensoLogo } from '@/components/icons';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, user, loading } = useAuth();
+  const { login, user, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -34,17 +34,21 @@ export default function LoginPage() {
       await login(email, password);
       router.push('/dashboard');
     } catch (error: any) {
+      let errorMessage = 'En feil oppstod ved innlogging. Prøv igjen.';
+      if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+        errorMessage = 'Ugyldig e-post eller passord.';
+      }
       toast({
         variant: 'destructive',
-        title: 'Login Failed',
-        description: error.message,
+        title: 'Innlogging feilet',
+        description: errorMessage,
       });
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  if (loading) {
+  if (authLoading) {
     return <Loader2 className="animate-spin" />;
   }
 
@@ -59,19 +63,19 @@ export default function LoginPage() {
         <div className="flex justify-center mb-4">
           <SensoLogo className="h-12 w-12 text-primary" />
         </div>
-        <CardTitle className="font-headline text-2xl">Welcome Back</CardTitle>
+        <CardTitle className="font-headline text-2xl">Velkommen tilbake</CardTitle>
         <CardDescription>
-          Enter your credentials to access your account.
+          Logg inn for å få tilgang til din konto
         </CardDescription>
       </CardHeader>
       <form onSubmit={handleLogin}>
         <CardContent className="grid gap-4">
           <div className="grid gap-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">E-post</Label>
             <Input
               id="email"
               type="email"
-              placeholder="m@example.com"
+              placeholder="din@epost.no"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -79,7 +83,7 @@ export default function LoginPage() {
             />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">Passord</Label>
             <Input
               id="password"
               type="password"
@@ -93,12 +97,12 @@ export default function LoginPage() {
         <CardFooter className="flex flex-col gap-4">
           <Button className="w-full" type="submit" disabled={isSubmitting}>
             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Login
+            Logg inn
           </Button>
           <div className="text-center text-sm">
-            Don&apos;t have an account?{' '}
+            Har du ikke en konto?{' '}
             <Link href="/signup" className="underline">
-              Sign up
+              Registrer deg
             </Link>
           </div>
         </CardFooter>
