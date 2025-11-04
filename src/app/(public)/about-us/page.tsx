@@ -12,7 +12,7 @@ export default function AboutUsPage() {
       <section className="py-16 md:py-24">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-4xl md:text-6xl font-bold font-headline tracking-tight text-foreground">
-            Om SensoGuard
+            Om SENSO
           </h1>
           <p className="mt-4 max-w-3xl mx-auto text-lg md:text-xl text-muted-foreground">
             Vi er et team av lidenskapelige ingeniører og innovatører dedikert til å revolusjonere industrielt vedlikehold gjennom prediktiv teknologi.
@@ -40,7 +40,7 @@ export default function AboutUsPage() {
           <div>
             <h2 className="text-3xl font-bold font-headline mb-4">Vår Historie</h2>
             <p className="text-muted-foreground mb-4">
-              SensoGuard ble grunnlagt i 2023 med en enkel, men kraftfull idé: å forutsi maskinfeil før de skjer. Frustrert over de høye kostnadene og den operasjonelle hodepinen forårsaket av uventet nedetid, bestemte våre grunnleggere seg for å bygge en løsning som gir bedrifter verktøyene til å være proaktive, ikke reaktive.
+              SENSO ble grunnlagt i 2023 med en enkel, men kraftfull idé: å forutsi maskinfeil før de skjer. Frustrert over de høye kostnadene og den operasjonelle hodepinen forårsaket av uventet nedetid, bestemte våre grunnleggere seg for å bygge en løsning som gir bedrifter verktøyene til å være proaktive, ikke reaktive.
             </p>
             <p className="text-muted-foreground">
               Fra en beskjeden start i en liten garasje, har vi vokst til å bli en betrodd partner for produsenter over hele landet, og hjelper dem med å spare millioner i vedlikeholdskostnader og tapt produksjon.
@@ -79,7 +79,7 @@ export default function AboutUsPage() {
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
               <div className="text-center mb-12">
                   <h2 className="text-3xl md:text-4xl font-bold font-headline">Møt Teamet</h2>
-                  <p className="mt-2 text-muted-foreground">De dedikerte personene bak SensoGuard.</p>
+                  <p className="mt-2 text-muted-foreground">De dedikerte personene bak SENSO.</p>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
                   <TeamMember
@@ -113,7 +113,7 @@ export default function AboutUsPage() {
             <p className="mt-2 text-muted-foreground">Vi vil gjerne høre fra deg! Ta kontakt for en uforpliktende prat.</p>
           </div>
           <div className="max-w-4xl mx-auto grid md:grid-cols-3 gap-8 text-center">
-             <ContactInfo icon={Mail} title="E-post" info="kontakt@sensoguard.no" href="mailto:kontakt@sensoguard.no" />
+             <ContactInfo icon={Mail} title="E-post" info="kontakt@senso.no" href="mailto:kontakt@senso.no" />
              <ContactInfo icon={Phone} title="Telefon" info="+47 123 45 678" href="tel:+4712345678" />
              <ContactInfo icon={MapPin} title="Adresse" info="Innovasjonsveien 123, 0349 Oslo" />
           </div>

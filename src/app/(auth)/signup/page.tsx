@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { SensoGuardLogo } from "@/components/icons";
+import { SensoLogo } from "@/components/icons";
 import Link from "next/link";
 
 export default function SignupPage() {
@@ -17,11 +17,11 @@ export default function SignupPage() {
     <Card className="w-full max-w-sm">
        <CardHeader className="text-center">
         <div className="flex justify-center mb-4">
-            <SensoGuardLogo className="h-12 w-12 text-primary" />
+            <SensoLogo className="h-12 w-12 text-primary" />
         </div>
         <CardTitle className="font-headline text-2xl">Create an Account</CardTitle>
         <CardDescription>
-          Enter your information to get started with SensoGuard.
+          Enter your information to get started with SENSO.
         </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4">

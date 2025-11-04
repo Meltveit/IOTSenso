@@ -1,6 +1,6 @@
 "use client"
 import Link from "next/link";
-import { SensoGuardLogo } from "@/components/icons";
+import { SensoLogo } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Menu } from "lucide-react";
@@ -19,8 +19,8 @@ export default function PublicMobileNav() {
             <SheetContent side="left" className="sm:max-w-xs p-0">
                  <div className="flex h-16 items-center justify-center border-b">
                     <Link href="/home" className="flex items-center gap-2 font-bold font-headline" onClick={() => setIsOpen(false)}>
-                        <SensoGuardLogo className="h-6 w-6 text-primary" />
-                        <span className="text-lg">SensoGuard</span>
+                        <SensoLogo className="h-6 w-6 text-primary" />
+                        <span className="text-lg">SENSO</span>
                     </Link>
                 </div>
                 <div className="p-4 flex flex-col gap-4">

@@ -20,7 +20,7 @@ import {
   HelpCircle,
   ShoppingBag,
 } from "lucide-react";
-import { SensoGuardLogo } from "../icons";
+import { SensoLogo } from "../icons";
 
 const navItems = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
@@ -37,9 +37,9 @@ export default function SidebarNav() {
     <>
       <SidebarHeader className="p-4 flex items-center justify-between">
         <Link href="/dashboard" className="flex items-center gap-2 font-bold font-headline text-lg">
-          <SensoGuardLogo className="w-8 h-8 text-primary" />
+          <SensoLogo className="w-8 h-8 text-primary" />
           <span className="group-data-[collapsible=icon]:hidden">
-            SensoGuard
+            SENSO
           </span>
         </Link>
         <div className="group-data-[collapsible=icon]:hidden">

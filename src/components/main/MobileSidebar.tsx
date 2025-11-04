@@ -1,6 +1,6 @@
 "use client"
 import Link from "next/link";
-import { SensoGuardLogo } from "@/components/icons";
+import { SensoLogo } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import SidebarNav from "@/components/main/SidebarNav";
@@ -18,8 +18,8 @@ export default function MobileSidebar() {
             <SheetContent side="left" className="sm:max-w-xs p-0">
                  <div className="flex h-16 items-center justify-center border-b">
                     <Link href="/" className="flex items-center gap-2 font-bold font-headline">
-                        <SensoGuardLogo className="h-6 w-6 text-primary" />
-                        <span className="text-lg">SensoGuard</span>
+                        <SensoLogo className="h-6 w-6 text-primary" />
+                        <span className="text-lg">SENSO</span>
                     </Link>
                 </div>
                 <div className="overflow-y-auto">

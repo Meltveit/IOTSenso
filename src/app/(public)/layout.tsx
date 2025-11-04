@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { SensoGuardLogo } from "@/components/icons";
+import { SensoLogo } from "@/components/icons";
 import PublicMobileNav from "@/components/main/PublicMobileNav";
 
 export default function PublicLayout({
@@ -13,9 +13,9 @@ export default function PublicLayout({
             <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
                 <div className="container mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
                 <Link href="/home" className="flex items-center gap-2">
-                    <SensoGuardLogo className="h-8 w-8 text-primary" />
+                    <SensoLogo className="h-8 w-8 text-primary" />
                     <span className="text-xl font-bold font-headline text-foreground">
-                    SensoGuard
+                    SENSO
                     </span>
                 </Link>
                 <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
@@ -48,9 +48,9 @@ export default function PublicLayout({
                     <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
                         <div className="col-span-2 md:col-span-2">
                             <Link href="/home" className="flex items-center gap-2">
-                                <SensoGuardLogo className="h-8 w-8 text-primary" />
+                                <SensoLogo className="h-8 w-8 text-primary" />
                                 <span className="text-xl font-bold font-headline text-foreground">
-                                    SensoGuard
+                                    SENSO
                                 </span>
                             </Link>
                             <p className="text-sm text-muted-foreground mt-4">Proactive sensor monitoring to protect your assets.</p>
@@ -80,7 +80,7 @@ export default function PublicLayout({
                         </div>
                     </div>
                     <div className="mt-8 border-t pt-6 text-center text-sm text-muted-foreground">
-                        <p>&copy; {new Date().getFullYear()} SensoGuard. All rights reserved.</p>
+                        <p>&copy; {new Date().getFullYear()} SENSO. All rights reserved.</p>
                     </div>
                 </div>
             </footer>

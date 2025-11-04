@@ -7,7 +7,7 @@ import { Toaster } from "@/components/ui/toaster";
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 export const metadata: Metadata = {
-  title: "SensoGuard",
+  title: "SENSO",
   description: "Real-time sensor monitoring and predictive maintenance.",
 };
 

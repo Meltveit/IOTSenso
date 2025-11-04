@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckCircle, Shield, TrendingUp, Zap, Bot, Star } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { SensoGuardLogo } from "@/components/icons";
+import { SensoLogo } from "@/components/icons";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
@@ -18,7 +18,7 @@ export default function HomePage() {
             Proactive Sensor Monitoring
           </h1>
           <p className="mt-4 max-w-2xl mx-auto text-lg md:text-xl text-muted-foreground">
-            SensoGuard provides real-time insights and predictive maintenance to protect your assets before issues arise.
+            SENSO provides real-time insights and predictive maintenance to protect your assets before issues arise.
           </p>
           <div className="mt-8 flex justify-center gap-4">
             <Button size="lg" asChild>
@@ -94,7 +94,7 @@ export default function HomePage() {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                   <TestimonialCard
-                      quote="SensoGuard has transformed our maintenance schedule. We've cut unplanned downtime by 60% and can finally be proactive instead of reactive."
+                      quote="SENSO has transformed our maintenance schedule. We've cut unplanned downtime by 60% and can finally be proactive instead of reactive."
                       name="John Doe"
                       title="Operations Manager, Acme Inc."
                       avatarUrl="https://i.pravatar.cc/150?u=a042581f4e29026704d"
@@ -106,7 +106,7 @@ export default function HomePage() {
                       avatarUrl="https://i.pravatar.cc/150?u=a042581f4e29026704e"
                   />
                   <TestimonialCard
-                      quote="As a small manufacturer, we can't afford downtime. SensoGuard is affordable, easy to set up, and has given us peace of mind."
+                      quote="As a small manufacturer, we can't afford downtime. SENSO is affordable, easy to set up, and has given us peace of mind."
                       name="Mike Ross"
                       title="Owner, Ross Manufacturing"
                       avatarUrl="https://i.pravatar.cc/150?u=a042581f4e29026704f"
@@ -120,7 +120,7 @@ export default function HomePage() {
               <div className="bg-primary text-primary-foreground rounded-lg p-10 lg:p-16 text-center">
                   <h2 className="text-3xl md:text-4xl font-bold font-headline">Ready to Prevent Your Next Failure?</h2>
                   <p className="mt-4 max-w-2xl mx-auto text-lg">
-                      Stop reacting and start predicting. Get started with SensoGuard today and gain full control over your equipment's health.
+                      Stop reacting and start predicting. Get started with SENSO today and gain full control over your equipment's health.
                   </p>
                   <div className="mt-8">
                       <Button size="lg" variant="secondary" asChild className="text-primary hover:bg-white/90">
