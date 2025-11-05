@@ -67,7 +67,6 @@ export default function SensorDetailsClient({
   const statusColors: Record<SensorStatus, string> = {
     ok: "bg-green-500/20 text-green-700 border-green-500/30",
     pending: "bg-blue-500/20 text-blue-700 border-blue-500/30",
-    normal: "bg-green-500/20 text-green-700 border-green-500/30",
     warning: "bg-accent/20 text-accent-foreground border-accent/30",
     critical: "bg-destructive/20 text-destructive border-destructive/30",
     offline: "bg-gray-500/20 text-gray-600 border-gray-500/30",
