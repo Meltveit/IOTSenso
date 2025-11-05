@@ -18,15 +18,16 @@ import {
   BarChart2,
   Settings,
   HelpCircle,
-  ShoppingBag,
+  Building,
 } from "lucide-react";
 import { SensoLogo } from "../icons";
 
 const navItems = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-  { href: "/sensors", icon: Thermometer, label: "Sensors" },
-  { href: "/alerts", icon: Bell, label: "Alerts" },
-  { href: "/analytics", icon: BarChart2, label: "Analytics" },
+  { href: "/buildings", icon: Building, label: "Bygninger" },
+  { href: "/sensors", icon: Thermometer, label: "Sensorer" },
+  { href: "/alerts", icon: Bell, label: "Alarmer" },
+  { href: "/analytics", icon: BarChart2, label: "Analyse" },
 ];
 
 export default function SidebarNav() {

@@ -49,6 +49,30 @@ export interface BusinessUser extends BaseUser {
 
 export type User = PrivateUser | BusinessUser;
 
+
+// ============================================
+// BUILDING TYPES
+// ============================================
+
+export type BuildingType = 'residential' | 'commercial' | 'industrial' | 'cabin' | 'other';
+
+export interface Building {
+    id: string;
+    userId: string;
+    name: string;
+    type: BuildingType;
+    address?: {
+        street: string;
+        postalCode: string;
+        city: string;
+    };
+    notes?: string;
+    sensorCount: number;
+    createdAt: Timestamp;
+    updatedAt: Timestamp;
+}
+
+
 // ============================================
 // SENSOR TYPES
 // ============================================
@@ -59,6 +83,7 @@ export type SensorStatus = 'ok' | 'warning' | 'critical' | 'offline';
 export interface Sensor {
   id: string;
   userId: string;
+  buildingId?: string; // Link to building
   type: SensorType;
   name: string;
   location?: string;
