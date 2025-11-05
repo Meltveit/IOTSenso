@@ -51,19 +51,16 @@ export default function SidebarNav() {
         <SidebarMenu className="px-4 py-2">
           {navItems.map((item) => (
             <SidebarMenuItem key={item.href}>
-              <Link href={item.href} passHref legacyBehavior>
+              <Link href={item.href}>
                 <SidebarMenuButton
-                  asChild
                   isActive={pathname.startsWith(item.href)}
                   tooltip={item.label}
                   className="justify-start"
                 >
-                  <a>
                     <item.icon className="h-5 w-5" />
                     <span className="group-data-[collapsible=icon]:hidden">
                       {item.label}
                     </span>
-                  </a>
                 </SidebarMenuButton>
               </Link>
             </SidebarMenuItem>
