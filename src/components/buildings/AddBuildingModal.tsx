@@ -57,20 +57,26 @@ export default function AddBuildingModal({
 
     setLoading(true);
     try {
-      const buildingData = {
+      const buildingData: any = {
         userId: user.uid,
         name: formData.name,
         type: formData.type,
-        address: formData.street || formData.city ? {
-          street: formData.street,
-          postalCode: formData.postalCode,
-          city: formData.city
-        } : undefined,
-        notes: formData.notes || undefined,
         sensorCount: 0,
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now()
       };
+
+      if (formData.street || formData.city) {
+        buildingData.address = {
+          street: formData.street,
+          postalCode: formData.postalCode,
+          city: formData.city
+        };
+      }
+
+      if (formData.notes) {
+        buildingData.notes = formData.notes;
+      }
 
       const buildingsCollectionRef = collection(db, "users", user.uid, "buildings");
       const docRef = await addDoc(buildingsCollectionRef, buildingData);
@@ -209,5 +215,3 @@ export default function AddBuildingModal({
     </Dialog>
   );
 }
-
-    
