@@ -49,55 +49,57 @@ export interface BusinessUser extends BaseUser {
 
 export type User = PrivateUser | BusinessUser;
 
-
 // ============================================
-// BUILDING TYPES
+// BUILDING TYPES (NYTT!)
 // ============================================
 
 export type BuildingType = 'residential' | 'commercial' | 'industrial' | 'cabin' | 'other';
 
 export interface Building {
-    id: string;
-    userId: string;
-    name: string;
-    type: BuildingType;
-    address?: {
-        street: string;
-        postalCode: string;
-        city: string;
-    };
-    notes?: string;
-    sensorCount: number;
-    createdAt: Timestamp;
-    updatedAt: Timestamp;
+  id: string;
+  userId: string; // Eier av bygningen
+  name: string; // "Hovedbygning", "Garasje", "Hytte på fjellet"
+  type?: BuildingType;
+  address?: {
+    street: string;
+    postalCode: string;
+    city: string;
+  };
+  imageUrl?: string;
+  notes?: string; // Ekstra notater om bygningen
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+  sensorCount: number; // Teller - oppdateres automatisk
 }
 
-
 // ============================================
-// SENSOR TYPES
+// SENSOR TYPES (OPPDATERT!)
 // ============================================
 
 export type SensorType = 'weight' | 'ir' | 'moisture' | 'flow' | 'temperature';
-export type SensorStatus = 'ok' | 'warning' | 'critical' | 'offline';
+export type SensorStatus = 'ok' | 'warning' | 'critical' | 'offline' | 'pending';
 
 export interface Sensor {
   id: string;
+  sensorId: string; // Fysisk ID på sensor (f.eks. SG-2024-001234)
   userId: string;
-  buildingId?: string; // Link to building
+  buildingId?: string; // NYTT - referanse til bygning (valgfritt)
   type: SensorType;
   name: string;
-  location?: string;
+  location?: string; // Spesifikk plassering innenfor bygning
   thresholds: {
     warning: number;
     critical: number;
   };
   alertMethods: ('email' | 'sms')[];
   batteryLevel: number; // 0-100
-  lastCommunication: Timestamp;
+  signalStrength?: number; // dBm
+  lastCommunication: Timestamp | null;
   status: SensorStatus;
   currentValue: number;
   unit: string; // 'kg', 'cm', '%', etc.
   createdAt: Timestamp;
+  updatedAt: Timestamp;
   equipmentType?: string;
   data?: SensorReading[];
 }
@@ -119,11 +121,26 @@ export interface Alert {
   id: string;
   sensorId: string;
   userId: string;
+  buildingId?: string; // NYTT - for å filtrere varsler per bygning
   type: AlertType;
   message: string;
   timestamp: Timestamp;
   acknowledged: boolean;
   readAt?: Timestamp;
+}
+
+// ============================================
+// AVAILABLE SENSORS (Sensor-inventory)
+// ============================================
+
+export interface AvailableSensor {
+  sensorId: string; // Fysisk ID (f.eks. SG-2024-001234)
+  type: SensorType;
+  manufacturedAt: Timestamp;
+  registeredToUser?: string; // userId hvis allerede registrert
+  registeredAt?: Timestamp;
+  simCardNumber?: string;
+  firmwareVersion: string;
 }
 
 // ============================================
@@ -144,8 +161,8 @@ export interface Product {
   costSavings: Record<string, string>;
   repaymentTime: string;
   uniqueBenefits: string[];
-  price: number;
-  monthlyFee: number;
+  price: number; // Engangskostnad for sensoren
+  monthlyFee: number; // Månedlig datakostnad (deprecated - nå inkludert i abonnement)
   imageUrl?: string;
   imageHint?: string;
   inStock: boolean;
@@ -171,6 +188,7 @@ export interface Order {
     city: string;
   };
 }
+
 
 // ============================================
 // FORM TYPES (for frontend)
