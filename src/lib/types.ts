@@ -102,6 +102,7 @@ export interface Sensor {
   updatedAt: Timestamp;
   equipmentType?: string;
   data?: SensorReading[];
+  maintenanceHistory?: any[]; // For predictive analysis
 }
 
 export interface SensorReading {
