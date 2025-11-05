@@ -24,7 +24,7 @@ import { Building, BuildingType } from "@/lib/types";
 import { addDoc, collection, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/contexts/AuthContext";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
 
@@ -40,7 +40,6 @@ export default function AddBuildingModal({
   onBuildingAdded
 }: AddBuildingModalProps) {
   const { user } = useAuth();
-  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   
   const [formData, setFormData] = useState({
@@ -55,7 +54,7 @@ export default function AddBuildingModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) {
-        toast({ variant: 'destructive', title: 'Not authenticated', description: 'You must be logged in to add a building.' });
+        toast.error('Du må være logget inn for å legge til en bygning.');
         return;
     }
 
@@ -83,7 +82,7 @@ export default function AddBuildingModal({
         ...buildingData
       };
 
-      toast({ title: "Bygning opprettet", description: `${formData.name} har blitt lagt til.` });
+      toast.success("Bygning opprettet", { description: `${formData.name} har blitt lagt til.` });
       
       if (onBuildingAdded) {
         onBuildingAdded(newBuilding);
@@ -101,7 +100,7 @@ export default function AddBuildingModal({
       onOpenChange(false);
     } catch (error) {
       console.error("Error adding building:", error);
-      toast({ variant: 'destructive', title: 'Feil', description: 'Kunne ikke opprette bygning. Prøv igjen.'});
+      toast.error('Feil', { description: 'Kunne ikke opprette bygning. Prøv igjen.'});
     } finally {
       setLoading(false);
     }

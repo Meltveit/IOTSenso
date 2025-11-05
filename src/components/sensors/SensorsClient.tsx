@@ -22,153 +22,96 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter,
-} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { MoreHorizontal, PlusCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import type { Sensor } from "@/lib/types";
-import { Input } from "../ui/input";
-import { Label } from "../ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../ui/select";
 import { useRouter } from "next/navigation";
+import AddSensorModal from "./AddSensorModal";
 
 export default function SensorsClient({ sensors }: { sensors: Sensor[] }) {
   const router = useRouter();
   const [open, setOpen] = React.useState(false);
 
   const statusColors = {
-    normal: "bg-green-500/20 text-green-700 border-green-500/30",
-    warning: "bg-accent/20 text-accent-foreground border-accent/30",
-    critical: "bg-destructive/20 text-destructive border-destructive/30",
+    ok: "bg-green-500/20 text-green-700 border-green-500/30",
+    warning: "bg-yellow-500/20 text-yellow-600 border-yellow-500/30",
+    critical: "bg-red-500/20 text-red-600 border-red-500/30",
+    offline: "bg-gray-500/20 text-gray-600 border-gray-500/30",
+    pending: "bg-blue-500/20 text-blue-600 border-blue-500/30",
   };
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <div>
-          <CardTitle className="font-headline">Sensor Management</CardTitle>
-          <CardDescription>
-            Add, edit, and manage all your connected sensors.
-          </CardDescription>
-        </div>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button size="sm" className="gap-1">
-              <PlusCircle className="h-4 w-4" />
-              Add Sensor
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle className="font-headline">Add New Sensor</DialogTitle>
-              <DialogDescription>
-                Fill in the details to register a new sensor.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="name" className="text-right">
-                  Name
-                </Label>
-                <Input id="name" defaultValue="Boiler Temp" className="col-span-3" />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="type" className="text-right">
-                  Type
-                </Label>
-                <Select>
-                  <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Select sensor type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="temperature">Temperature</SelectItem>
-                    <SelectItem value="humidity">Humidity</SelectItem>
-                    <SelectItem value="pressure">Pressure</SelectItem>
-                    <SelectItem value="vibration">Vibration</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="location" className="text-right">
-                  Location
-                </Label>
-                <Input id="location" defaultValue="Factory Floor 1" className="col-span-3" />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button type="submit" onClick={() => setOpen(false)}>Save Sensor</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </CardHeader>
-      <CardContent>
-        {sensors.length > 0 ? (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Location</TableHead>
-                <TableHead>
-                  <span className="sr-only">Actions</span>
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {sensors.map((sensor) => (
-                <TableRow key={sensor.id} className="cursor-pointer" onClick={() => router.push(`/sensors/${sensor.id}`)}>
-                  <TableCell className="font-medium">{sensor.name}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className={cn(statusColors[sensor.status])}>
-                      {sensor.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{sensor.type}</TableCell>
-                  <TableCell>{sensor.location}</TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button aria-haspopup="true" size="icon" variant="ghost" onClick={(e) => e.stopPropagation()}>
-                          <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">Toggle menu</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); router.push(`/sensors/${sensor.id}`)}}>View Details</DropdownMenuItem>
-                        <DropdownMenuItem onClick={(e) => e.stopPropagation()}>Edit</DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive" onClick={(e) => e.stopPropagation()}>
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        ) : (
-          <div className="text-center py-16 text-muted-foreground">
-            <p className="font-semibold">No sensors found</p>
-            <p>Click "Add Sensor" to get started.</p>
+    <>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle className="font-headline">Sensorer</CardTitle>
+            <CardDescription>
+              Administrer alle dine tilkoblede sensorer.
+            </CardDescription>
           </div>
-        )}
-      </CardContent>
-    </Card>
+          <Button size="sm" className="gap-1" onClick={() => setOpen(true)}>
+            <PlusCircle className="h-4 w-4" />
+            Legg til sensor
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {sensors.length > 0 ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Navn</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Plassering</TableHead>
+                  <TableHead>
+                    <span className="sr-only">Handlinger</span>
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {sensors.map((sensor) => (
+                  <TableRow key={sensor.id} className="cursor-pointer" onClick={() => router.push(`/sensors/${sensor.id}`)}>
+                    <TableCell className="font-medium">{sensor.name}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className={cn(statusColors[sensor.status])}>
+                        {sensor.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{sensor.type}</TableCell>
+                    <TableCell>{sensor.location || 'Ikke spesifisert'}</TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button aria-haspopup="true" size="icon" variant="ghost" onClick={(e) => e.stopPropagation()}>
+                            <MoreHorizontal className="h-4 w-4" />
+                            <span className="sr-only">Åpne meny</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); router.push(`/sensors/${sensor.id}`)}}>Vis detaljer</DropdownMenuItem>
+                          <DropdownMenuItem onClick={(e) => e.stopPropagation()}>Rediger</DropdownMenuItem>
+                          <DropdownMenuItem className="text-destructive" onClick={(e) => e.stopPropagation()}>
+                            Slett
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            <div className="text-center py-16 text-muted-foreground">
+              <p className="font-semibold">Ingen sensorer funnet</p>
+              <p>Klikk på "Legg til sensor" for å komme i gang.</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+      <AddSensorModal open={open} onOpenChange={setOpen} />
+    </>
   );
 }

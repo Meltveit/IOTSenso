@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { cn } from "@/lib/utils";
-import { Toaster } from "@/components/ui/toaster";
+import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ClientOnly from "@/components/ClientOnly";
-
 import { Inter, Space_Grotesk } from "next/font/google";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
@@ -36,7 +35,7 @@ export default function RootLayout({
               {children}
           </AuthProvider>
         </ClientOnly>
-        <Toaster />
+        <SonnerToaster />
       </body>
     </html>
   );
