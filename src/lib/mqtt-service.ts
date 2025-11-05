@@ -1,10 +1,12 @@
-{// This is a placeholder for the MQTT service.
+
+// This is a placeholder for the MQTT service.
 // In a real-world scenario, this code would run in a persistent backend service,
 // like a Firebase Function or a standalone Node.js process, NOT in the Next.js frontend.
 import 'dotenv/config';
 import mqtt from 'mqtt';
 import { db } from '@/lib/firebase';
-import { collection, query, where, getDocs, updateDoc, addDoc, Timestamp } from 'firebase/firestore';
+import { collection, query, where, getDocs, updateDoc, addDoc, Timestamp, collectionGroup } from 'firebase/firestore';
+import type { Sensor } from '@/lib/types';
 
 const options: mqtt.IClientOptions = {
   host: process.env.HIVEMQ_URL,
@@ -54,8 +56,7 @@ export function connectMqtt() {
         return;
       }
 
-      // Find the sensor document in Firestore using its physical ID
-      const sensorsRef = collection(db, "users");
+      // Find the sensor document in Firestore using its physical ID by searching across all 'sensors' subcollections
       const q = query(collectionGroup(db, 'sensors'), where('sensorId', '==', sensorPhysicalId));
       const querySnapshot = await getDocs(q);
 
@@ -68,7 +69,7 @@ export function connectMqtt() {
       // Should only be one, but loop just in case
       for (const doc of querySnapshot.docs) {
         const sensorDocRef = doc.ref;
-        const sensorData = doc.data();
+        const sensorData = doc.data() as Sensor;
 
         console.log(`Updating Firestore for sensor: ${sensorData.name} (${doc.id})`);
 
@@ -107,4 +108,7 @@ export function connectMqtt() {
   });
 }
 
-connectMqtt();
+// Start the service if the file is run directly
+if (typeof require !== 'undefined' && require.main === module) {
+    connectMqtt();
+}
