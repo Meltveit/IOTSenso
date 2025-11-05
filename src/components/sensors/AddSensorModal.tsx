@@ -1,3 +1,4 @@
+// components/sensors/AddSensorModal.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -31,7 +32,8 @@ import {
   where, 
   getDocs,
   updateDoc,
-  doc 
+  doc, 
+  getDoc
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/contexts/AuthContext";
@@ -68,7 +70,6 @@ export default function AddSensorModal({
     alertSms: false
   });
 
-  // Last inn bygninger når modal åpnes
   useEffect(() => {
     if (open && user) {
       loadBuildings();
@@ -79,17 +80,12 @@ export default function AddSensorModal({
     if (!user) return;
     
     try {
-      const buildingsQuery = query(
-        collection(db, "buildings"),
-        where("userId", "==", user.uid)
-      );
-      
+      const buildingsQuery = query(collection(db, "users", user.uid, "buildings"));
       const snapshot = await getDocs(buildingsQuery);
       const buildingsData = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       })) as Building[];
-      
       setBuildings(buildingsData);
     } catch (error) {
       console.error("Error loading buildings:", error);
@@ -102,8 +98,7 @@ export default function AddSensorModal({
         resetForm();
     }, 300);
   }
-
-  // Steg 1: Verifiser Sensor-ID
+  
   const verifySensorId = async () => {
     if (!formData.sensorId) {
       toast.error("Vennligst skriv inn Sensor-ID");
@@ -112,28 +107,33 @@ export default function AddSensorModal({
 
     setLoading(true);
     try {
-      // For now, let's assume any ID is valid for demo purposes
-      // In a real app, you would check this against a database of available sensors
-      // const sensorIdPattern = /^SG-\d{4}-\d{6}$/;
-      // if (!sensorIdPattern.test(formData.sensorId)) {
-      //   toast.error("Ugyldig Sensor-ID format. Skal være: SG-2024-XXXXXX");
-      //   return;
-      // }
+      const sensorIdPattern = /^SG-\d{4}-\d{6}$/;
+      if (!sensorIdPattern.test(formData.sensorId)) {
+        toast.error("Ugyldig Sensor-ID format. Skal være: SG-2024-XXXXXX");
+        setLoading(false);
+        return;
+      }
       
-      // Fikset: Bruker en enkel objektlookup istedenfor switch expression
-      const sensorTypeMap: Record<number, SensorType> = {
-        0: 'temperature',
-        1: 'weight',
-        2: 'moisture',
-        3: 'flow',
-        4: 'ir'
-      };
-      
-      const pseudoSensorType = sensorTypeMap[formData.sensorId.length % 5] || 'temperature';
+      const sensorDocRef = doc(db, "available_sensors", formData.sensorId);
+      const sensorDocSnap = await getDoc(sensorDocRef);
+
+      if (!sensorDocSnap.exists()) {
+        toast.error("Sensor-ID ikke funnet. Sjekk at du har skrevet riktig ID.");
+        setLoading(false);
+        return;
+      }
+
+      const sensorData = sensorDocSnap.data();
+
+      if (sensorData.registeredToUser) {
+        toast.error("Denne sensoren er allerede registrert til en bruker.");
+        setLoading(false);
+        return;
+      }
 
       setFormData(prev => ({
         ...prev,
-        sensorType: pseudoSensorType
+        sensorType: sensorData.type as SensorType
       }));
       
       toast.success("Sensor-ID verifisert!");
@@ -146,8 +146,7 @@ export default function AddSensorModal({
       setLoading(false);
     }
   };
-
-  // Steg 2: Velg bygning
+  
   const selectBuilding = () => {
     if (!formData.buildingId && formData.buildingId !== "none") {
       toast.error("Vennligst velg en bygning eller velg 'Ingen bygning'");
@@ -155,8 +154,7 @@ export default function AddSensorModal({
     }
     setStep(3);
   };
-
-  // Steg 3: Navn og plassering
+  
   const setNameAndLocation = () => {
     if (!formData.name) {
       toast.error("Vennligst gi sensoren et navn");
@@ -165,16 +163,15 @@ export default function AddSensorModal({
     setStep(4);
   };
 
-  // Steg 4: Aktiver sensor
   const activateSensor = async () => {
     if (!user) return;
 
     setLoading(true);
     try {
-      // 1. Opprett sensor-dokument
+      const sensorsCollectionRef = collection(db, "users", user.uid, "sensors");
       const sensorData = {
+        sensorId: formData.sensorId,
         userId: user.uid,
-        sensorId: formData.sensorId, // Fysisk sensor ID
         buildingId: formData.buildingId !== "none" ? formData.buildingId : undefined,
         type: formData.sensorType,
         name: formData.name,
@@ -203,11 +200,16 @@ export default function AddSensorModal({
         }))
       };
 
-      const sensorRef = await addDoc(collection(db, "sensors"), sensorData);
+      const sensorRef = await addDoc(sensorsCollectionRef, sensorData);
+      
+      const availableSensorRef = doc(db, "available_sensors", formData.sensorId);
+      await updateDoc(availableSensorRef, {
+        registeredToUser: user.uid,
+        registeredAt: Timestamp.now()
+      });
 
-      // 3. Oppdater sensorCount på bygning hvis relevant
       if (formData.buildingId && formData.buildingId !== "none") {
-        const buildingRef = doc(db, "buildings", formData.buildingId);
+        const buildingRef = doc(db, "users", user.uid, "buildings", formData.buildingId);
         const building = buildings.find(b => b.id === formData.buildingId);
         if (building) {
           await updateDoc(buildingRef, {
@@ -239,6 +241,7 @@ export default function AddSensorModal({
   };
 
   const resetForm = () => {
+    setStep(1);
     setFormData({
       sensorId: "",
       sensorType: "" as SensorType,
@@ -250,7 +253,6 @@ export default function AddSensorModal({
       alertEmail: true,
       alertSms: false
     });
-    setStep(1);
   };
 
   const getUnitForSensorType = (type: SensorType): string => {
@@ -287,7 +289,6 @@ export default function AddSensorModal({
             <Progress value={(step / 4) * 100} className="h-2" />
           </DialogHeader>
 
-          {/* STEG 1: Sensor-ID */}
           {step === 1 && (
             <div className="space-y-4 pt-4">
               <div className="bg-primary/10 p-4 rounded-lg">
@@ -327,7 +328,6 @@ export default function AddSensorModal({
             </div>
           )}
 
-          {/* STEG 2: Velg bygning */}
           {step === 2 && (
             <div className="space-y-4 pt-4">
               <div className="space-y-2">
@@ -381,7 +381,6 @@ export default function AddSensorModal({
             </div>
           )}
 
-          {/* STEG 3: Navn og plassering */}
           {step === 3 && (
             <div className="space-y-4 pt-4">
               <div className="space-y-2">
@@ -417,7 +416,6 @@ export default function AddSensorModal({
             </div>
           )}
 
-          {/* STEG 4: Varsler og aktivering */}
           {step === 4 && (
             <div className="space-y-4 pt-4">
               <div className="space-y-4">
@@ -511,3 +509,5 @@ export default function AddSensorModal({
     </>
   );
 }
+
+    

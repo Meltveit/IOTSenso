@@ -258,11 +258,31 @@
           "schema": {
             "$ref": "#/backend/entities/User"
           },
-          "description": "Collection to store user profiles.  Top-level collection to leverage Firebase Authentication.",
+          "description": "Collection to store user profiles. Top-level collection to leverage Firebase Authentication.",
           "params": [
             {
               "name": "userId",
               "description": "The unique identifier for the user, obtained from Firebase Authentication."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/buildings/{buildingId}",
+        "definition": {
+          "entityName": "Building",
+          "schema": {
+            "$ref": "#/backend/entities/Building"
+          },
+          "description": "Subcollection to store buildings owned by a specific user.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            },
+            {
+              "name": "buildingId",
+              "description": "The unique identifier for the building."
             }
           ]
         }
@@ -274,11 +294,11 @@
           "schema": {
             "$ref": "#/backend/entities/Sensor"
           },
-          "description": "Collection to store sensors owned by a specific user.  Path-based ownership: Only the user with the matching userId can access sensors in this collection.",
+          "description": "Subcollection to store sensors owned by a specific user. Path-based ownership ensures security.",
           "params": [
             {
               "name": "userId",
-              "description": "The unique identifier for the user, obtained from Firebase Authentication."
+              "description": "The unique identifier for the user."
             },
             {
               "name": "sensorId",
@@ -294,11 +314,11 @@
           "schema": {
             "$ref": "#/backend/entities/SensorData"
           },
-          "description": "Collection to store sensor data readings for a specific sensor. Path-based ownership: Only the user with the matching userId can access sensor data in this collection.",
+          "description": "Subcollection to store sensor data readings for a specific sensor.",
           "params": [
             {
               "name": "userId",
-              "description": "The unique identifier for the user, obtained from Firebase Authentication."
+              "description": "The unique identifier for the user."
             },
             {
               "name": "sensorId",
@@ -318,11 +338,11 @@
           "schema": {
             "$ref": "#/backend/entities/Alert"
           },
-          "description": "Collection to store alerts generated for a specific user.  Path-based ownership: Only the user with the matching userId can access alerts in this collection.",
+          "description": "Subcollection to store alerts for a specific user.",
           "params": [
             {
               "name": "userId",
-              "description": "The unique identifier for the user, obtained from Firebase Authentication."
+              "description": "The unique identifier for the user."
             },
             {
               "name": "alertId",
@@ -338,11 +358,11 @@
           "schema": {
             "$ref": "#/backend/entities/PredictiveMaintenance"
           },
-          "description": "Collection to store predictive maintenance records for a specific user. Path-based ownership: Only the user with the matching userId can access predictive maintenance records in this collection.",
+          "description": "Subcollection for predictive maintenance records.",
           "params": [
             {
               "name": "userId",
-              "description": "The unique identifier for the user, obtained from Firebase Authentication."
+              "description": "The unique identifier for the user."
             },
             {
               "name": "predictiveMaintenanceId",
@@ -358,11 +378,11 @@
           "schema": {
             "$ref": "#/backend/entities/Report"
           },
-          "description": "Collection to store reports generated for a specific user. Path-based ownership: Only the user with the matching userId can access reports in this collection.",
+          "description": "Subcollection for user-specific reports.",
           "params": [
             {
               "name": "userId",
-              "description": "The unique identifier for the user, obtained from Firebase Authentication."
+              "description": "The unique identifier for the user."
             },
             {
               "name": "reportId",
@@ -370,8 +390,26 @@
             }
           ]
         }
+      },
+       {
+        "path": "/available_sensors/{sensorId}",
+        "definition": {
+          "entityName": "AvailableSensor",
+          "schema": {
+            "$ref": "#/backend/entities/AvailableSensor"
+          },
+          "description": "Top-level collection for sensor inventory. Read-only for users.",
+          "params": [
+            {
+              "name": "sensorId",
+              "description": "The physical ID of the sensor."
+            }
+          ]
+        }
       }
     ],
-    "reasoning": "The Firestore data structure is designed to ensure security, scalability, and ease of debugging, following the principles of Authorization Independence, Clarity of Intent, DBAC, and QAPs. \n\n**Authorization Independence:**  The structure avoids hierarchical authorization dependencies by utilizing path-based ownership for private user data. For example, sensors, sensor data, alerts, reports, and predictive maintenance records are stored under the `/users/{userId}` collection, eliminating the need for `get()` calls in security rules and enabling atomic operations.\n\n**Structural Segregation:** Each collection is designed to maintain a homogeneous security posture.  All data within a user's path (`/users/{userId}/...`) is owned by that user.\n\n**Access Modeling:**\n*   **Private Data:** Path-based ownership is implemented using `/users/{userId}` as the root for user-owned data.\n*   **User-Owned Data:** Hierarchical paths like `/users/{userId}/sensors/{sensorId}` are used to represent `User 1:N Entity` relationships. This ensures clear ownership and simplifies security rules.\n\n**QAPs (Rules are not Filters):** List operations are secured by the path-based ownership.  A user can only list data under their own `/users/{userId}` path. This prevents unauthorized access to other users' data.\n\nThis structure prioritizes security, simplifies rules, and enhances debuggability by making authorization intent explicit through the use of clear path-based ownership."
+    "reasoning": "The Firestore data structure is refactored to nest all user-specific data (buildings, sensors, alerts, etc.) under the `/users/{userId}` collection. This enforces path-based security, simplifies rules, and improves query performance and scalability. A top-level `available_sensors` collection is added for inventory management, with read-only access for authenticated users to prevent unauthorized modifications."
   }
 }
+
+    

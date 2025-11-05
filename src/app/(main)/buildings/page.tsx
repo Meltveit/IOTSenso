@@ -10,6 +10,7 @@ import { Building, Sensor } from "@/lib/types";
 import { collection, query, where, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/contexts/AuthContext";
+import { Loader2 } from "lucide-react";
 
 export default function BuildingsPage() {
   const { user } = useAuth();
@@ -21,35 +22,34 @@ export default function BuildingsPage() {
   useEffect(() => {
     if (!user) return;
 
-    // Lyt til bygninger
-    const buildingsQuery = query(
-      collection(db, "buildings"),
-      where("userId", "==", user.uid)
-    );
+    setLoading(true);
+    
+    // Listen to buildings subcollection
+    const buildingsQuery = query(collection(db, "users", user.uid, "buildings"));
     
     const unsubscribeBuildings = onSnapshot(buildingsQuery, (snapshot) => {
       const buildingsData = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       })) as Building[];
-      
       setBuildings(buildingsData);
+      if(loading) setLoading(false);
+    }, (error) => {
+        console.error("Error fetching buildings:", error);
+        setLoading(false);
     });
 
-    // Lyt til sensorer
-    const sensorsQuery = query(
-      collection(db, "sensors"),
-      where("userId", "==", user.uid)
-    );
+    // Listen to sensors subcollection
+    const sensorsQuery = query(collection(db, "users", user.uid, "sensors"));
     
     const unsubscribeSensors = onSnapshot(sensorsQuery, (snapshot) => {
       const sensorsData = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       })) as Sensor[];
-      
       setSensors(sensorsData);
-      setLoading(false);
+    }, (error) => {
+        console.error("Error fetching sensors:", error);
     });
 
     return () => {
@@ -63,7 +63,7 @@ export default function BuildingsPage() {
   };
 
   if (loading) {
-    return <div className="flex items-center justify-center h-96">Laster...</div>;
+    return <div className="flex items-center justify-center h-96"><Loader2 className="h-8 w-8 animate-spin" /></div>;
   }
 
   return (
@@ -114,3 +114,5 @@ export default function BuildingsPage() {
     </div>
   );
 }
+
+    

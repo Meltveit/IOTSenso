@@ -26,6 +26,7 @@ import { addDoc, collection, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 
 interface AddBuildingModalProps {
   open: boolean;
@@ -71,7 +72,8 @@ export default function AddBuildingModal({
         updatedAt: Timestamp.now()
       };
 
-      const docRef = await addDoc(collection(db, "buildings"), buildingData);
+      const buildingsCollectionRef = collection(db, "users", user.uid, "buildings");
+      const docRef = await addDoc(buildingsCollectionRef, buildingData);
       
       const newBuilding: Building = {
         id: docRef.id,
@@ -198,6 +200,7 @@ export default function AddBuildingModal({
               Avbryt
             </Button>
             <Button type="submit" disabled={loading}>
+              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
               {loading ? "Oppretter..." : "Opprett bygning"}
             </Button>
           </DialogFooter>
@@ -206,3 +209,5 @@ export default function AddBuildingModal({
     </Dialog>
   );
 }
+
+    
