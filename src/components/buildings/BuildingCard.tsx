@@ -1,6 +1,7 @@
+// components/buildings/BuildingCard.tsx
 "use client";
 
-import type { Building, Sensor } from "@/lib/types";
+import { Building, Sensor } from "@/lib/types";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,7 +17,6 @@ import {
   WifiOff 
 } from "lucide-react";
 import Link from "next/link";
-import { cn } from "@/lib/utils";
 
 interface BuildingCardProps {
   building: Building;
@@ -31,61 +31,34 @@ const buildingIcons = {
   other: Home
 };
 
-function getBuildingStatus(sensors: Sensor[]): 'critical' | 'warning' | 'offline' | 'ok' {
-    if (sensors.some(s => s.status === 'critical')) return 'critical';
-    if (sensors.some(s => s.status === 'warning')) return 'warning';
-    if (sensors.some(s => s.status === 'offline')) return 'offline';
-    return 'ok';
+// FIX: Returner riktig Badge variant type
+function getBuildingStatusColor(sensors: Sensor[]): "default" | "destructive" | "secondary" {
+  if (sensors.some(s => s.status === 'critical')) return 'destructive';
+  if (sensors.some(s => s.status === 'warning')) return 'secondary';
+  if (sensors.some(s => s.status === 'offline')) return 'secondary';
+  return 'default';
 }
-
-const statusConfig = {
-    critical: {
-        badgeVariant: 'destructive',
-        icon: AlertCircle,
-        textColor: 'text-red-500',
-        bgColor: 'bg-red-500/10',
-    },
-    warning: {
-        badgeVariant: 'warning',
-        icon: AlertTriangle,
-        textColor: 'text-yellow-500',
-        bgColor: 'bg-yellow-500/10',
-    },
-    ok: {
-        badgeVariant: 'success',
-        icon: CheckCircle,
-        textColor: 'text-green-500',
-        bgColor: 'bg-green-500/10',
-    },
-    offline: {
-        badgeVariant: 'secondary',
-        icon: WifiOff,
-        textColor: 'text-gray-500',
-        bgColor: 'bg-gray-500/10',
-    }
-}
-
 
 export default function BuildingCard({ building, sensors }: BuildingCardProps) {
   const Icon = buildingIcons[building.type || 'residential'];
-  const status = getBuildingStatus(sensors);
+  const statusColor = getBuildingStatusColor(sensors);
   
-  const okCount = sensors.filter(s => s.status === 'ok').length;
+  const activeCount = sensors.filter(s => s.status === 'ok').length;
   const warningCount = sensors.filter(s => s.status === 'warning').length;
   const criticalCount = sensors.filter(s => s.status === 'critical').length;
   const offlineCount = sensors.filter(s => s.status === 'offline').length;
 
   return (
-    <Card className="hover:shadow-lg transition-shadow flex flex-col">
+    <Card className="hover:shadow-lg transition-shadow">
       <CardHeader>
         <div className="flex justify-between items-start">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-primary/10 rounded-lg">
-              <Icon className="h-6 w-6 text-primary" />
+            <div className="p-2 bg-accent/10 rounded-lg">
+              <Icon className="h-6 w-6 text-accent" />
             </div>
             <div>
               <h3 className="text-xl font-bold font-headline">{building.name}</h3>
-              {building.address && building.address.city && (
+              {building.address && (
                 <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
                   <MapPin className="h-3 w-3" />
                   <span>{building.address.street}, {building.address.city}</span>
@@ -93,36 +66,41 @@ export default function BuildingCard({ building, sensors }: BuildingCardProps) {
               )}
             </div>
           </div>
-          <Badge variant={statusConfig[status].badgeVariant}>
+          <Badge variant={statusColor}>
             {sensors.length} {sensors.length === 1 ? 'sensor' : 'sensorer'}
           </Badge>
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-4 flex-grow">
-        <div className="grid grid-cols-4 gap-2 text-center">
-            <div className={cn("flex flex-col items-center p-2 rounded-lg", statusConfig.ok.bgColor)}>
-                <statusConfig.ok.icon className={cn("h-5 w-5 mb-1", statusConfig.ok.textColor)} />
-                <span className="text-xl font-bold">{okCount}</span>
-                <span className="text-xs text-muted-foreground">OK</span>
-            </div>
-            <div className={cn("flex flex-col items-center p-2 rounded-lg", statusConfig.warning.bgColor)}>
-                <statusConfig.warning.icon className={cn("h-5 w-5 mb-1", statusConfig.warning.textColor)} />
-                <span className="text-xl font-bold">{warningCount}</span>
-                <span className="text-xs text-muted-foreground">Advarsel</span>
-            </div>
-            <div className={cn("flex flex-col items-center p-2 rounded-lg", statusConfig.critical.bgColor)}>
-                <statusConfig.critical.icon className={cn("h-5 w-5 mb-1", statusConfig.critical.textColor)} />
-                <span className="text-xl font-bold">{criticalCount}</span>
-                <span className="text-xs text-muted-foreground">Kritisk</span>
-            </div>
-            <div className={cn("flex flex-col items-center p-2 rounded-lg", statusConfig.offline.bgColor)}>
-                <statusConfig.offline.icon className={cn("h-5 w-5 mb-1", statusConfig.offline.textColor)} />
-                <span className="text-xl font-bold">{offlineCount}</span>
-                <span className="text-xs text-muted-foreground">Offline</span>
-            </div>
+      <CardContent className="space-y-4">
+        {/* Statistikk */}
+        <div className="grid grid-cols-4 gap-2">
+          <div className="flex flex-col items-center p-3 bg-green-500/10 rounded-lg">
+            <CheckCircle className="h-5 w-5 text-green-500 mb-1" />
+            <span className="text-2xl font-bold">{activeCount}</span>
+            <span className="text-xs text-muted-foreground">OK</span>
+          </div>
+          
+          <div className="flex flex-col items-center p-3 bg-yellow-500/10 rounded-lg">
+            <AlertTriangle className="h-5 w-5 text-yellow-500 mb-1" />
+            <span className="text-2xl font-bold">{warningCount}</span>
+            <span className="text-xs text-muted-foreground">Advarsel</span>
+          </div>
+          
+          <div className="flex flex-col items-center p-3 bg-red-500/10 rounded-lg">
+            <AlertCircle className="h-5 w-5 text-red-500 mb-1" />
+            <span className="text-2xl font-bold">{criticalCount}</span>
+            <span className="text-xs text-muted-foreground">Kritisk</span>
+          </div>
+          
+          <div className="flex flex-col items-center p-3 bg-gray-500/10 rounded-lg">
+            <WifiOff className="h-5 w-5 text-gray-500 mb-1" />
+            <span className="text-2xl font-bold">{offlineCount}</span>
+            <span className="text-xs text-muted-foreground">Offline</span>
+          </div>
         </div>
-        
+
+        {/* Sensor-liste (kompakt) */}
         <div className="space-y-2">
           {sensors.slice(0, 3).map(sensor => (
             <div 
@@ -130,11 +108,12 @@ export default function BuildingCard({ building, sensors }: BuildingCardProps) {
               className="flex items-center justify-between p-2 bg-secondary/50 rounded-lg"
             >
               <div className="flex items-center gap-2">
-                <div className={cn("h-2 w-2 rounded-full", 
-                    sensor.status === 'ok' ? 'bg-green-500' :
-                    sensor.status === 'warning' ? 'bg-yellow-500' :
-                    sensor.status === 'critical' ? 'bg-red-500' : 'bg-gray-500')} 
-                />
+                <div className={`h-2 w-2 rounded-full ${
+                  sensor.status === 'ok' ? 'bg-green-500' :
+                  sensor.status === 'warning' ? 'bg-yellow-500' :
+                  sensor.status === 'critical' ? 'bg-red-500' :
+                  'bg-gray-500'
+                }`} />
                 <span className="text-sm font-medium">{sensor.name}</span>
               </div>
               <span className="text-sm text-muted-foreground">
@@ -144,20 +123,14 @@ export default function BuildingCard({ building, sensors }: BuildingCardProps) {
           ))}
           
           {sensors.length > 3 && (
-            <p className="text-xs text-center text-muted-foreground pt-1">
+            <p className="text-xs text-center text-muted-foreground">
               + {sensors.length - 3} flere sensorer
-            </p>
-          )}
-
-           {sensors.length === 0 && (
-            <p className="text-xs text-center text-muted-foreground py-4">
-              Ingen sensorer lagt til i denne bygningen.
             </p>
           )}
         </div>
       </CardContent>
 
-      <CardFooter className="flex gap-2 p-4">
+      <CardFooter className="flex gap-2">
         <Button variant="outline" className="flex-1" asChild>
           <Link href={`/buildings/${building.id}`}>
             Se detaljer
@@ -165,7 +138,7 @@ export default function BuildingCard({ building, sensors }: BuildingCardProps) {
         </Button>
         <Button className="flex-1" asChild>
           <Link href={`/buildings/${building.id}/sensors`}>
-            Administrer
+            Administrer sensorer
           </Link>
         </Button>
       </CardFooter>

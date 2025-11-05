@@ -1,3 +1,4 @@
+// components/buildings/AddBuildingModal.tsx
 "use client";
 
 import { useState } from "react";
@@ -25,8 +26,6 @@ import { addDoc, collection, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
-
 
 interface AddBuildingModalProps {
   open: boolean;
@@ -53,10 +52,7 @@ export default function AddBuildingModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) {
-        toast.error('Du må være logget inn for å legge til en bygning.');
-        return;
-    }
+    if (!user) return;
 
     setLoading(true);
     try {
@@ -68,8 +64,8 @@ export default function AddBuildingModal({
           street: formData.street,
           postalCode: formData.postalCode,
           city: formData.city
-        } : {},
-        notes: formData.notes || '',
+        } : undefined,
+        notes: formData.notes || undefined,
         sensorCount: 0,
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now()
@@ -82,12 +78,13 @@ export default function AddBuildingModal({
         ...buildingData
       };
 
-      toast.success("Bygning opprettet", { description: `${formData.name} har blitt lagt til.` });
+      toast.success(`${formData.name} er opprettet!`);
       
       if (onBuildingAdded) {
         onBuildingAdded(newBuilding);
       }
       
+      // Reset form
       setFormData({
         name: "",
         type: "residential",
@@ -100,7 +97,7 @@ export default function AddBuildingModal({
       onOpenChange(false);
     } catch (error) {
       console.error("Error adding building:", error);
-      toast.error('Feil', { description: 'Kunne ikke opprette bygning. Prøv igjen.'});
+      toast.error("Kunne ikke opprette bygning. Prøv igjen.");
     } finally {
       setLoading(false);
     }
@@ -110,18 +107,18 @@ export default function AddBuildingModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle className="font-headline">Legg til ny bygning</DialogTitle>
+          <DialogTitle>Legg til ny bygning</DialogTitle>
           <DialogDescription>
-            Opprett en bygning for å gruppere og administrere sensorer.
+            Opprett en bygning for å gruppere sensorer
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4 pt-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="name">Bygningsnavn *</Label>
             <Input
               id="name"
-              placeholder="F.eks. Hovedbygning, Garasje, Hytte på fjellet"
+              placeholder="F.eks. Hovedbygning, Garasje, Hytte"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               required
@@ -191,7 +188,7 @@ export default function AddBuildingModal({
             />
           </div>
 
-          <DialogFooter className="pt-4">
+          <DialogFooter>
             <Button
               type="button"
               variant="outline"
@@ -201,7 +198,6 @@ export default function AddBuildingModal({
               Avbryt
             </Button>
             <Button type="submit" disabled={loading}>
-              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {loading ? "Oppretter..." : "Opprett bygning"}
             </Button>
           </DialogFooter>
