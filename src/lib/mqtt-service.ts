@@ -1,7 +1,7 @@
-// This is a placeholder for the MQTT service.
+{// This is a placeholder for the MQTT service.
 // In a real-world scenario, this code would run in a persistent backend service,
 // like a Firebase Function or a standalone Node.js process, NOT in the Next.js frontend.
-
+import 'dotenv/config';
 import mqtt from 'mqtt';
 import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs, updateDoc, addDoc, Timestamp } from 'firebase/firestore';
@@ -47,7 +47,7 @@ export function connectMqtt() {
     
     try {
       const payload = JSON.parse(message.toString());
-      const { value, battery } = payload;
+      const { value, battery, unit } = payload;
 
       if (value === undefined) {
         console.warn('Message payload is missing "value" field.');
@@ -55,9 +55,10 @@ export function connectMqtt() {
       }
 
       // Find the sensor document in Firestore using its physical ID
-      const sensorsRef = collection(db, 'sensors');
-      const q = query(sensorsRef, where('sensorId', '==', sensorPhysicalId));
+      const sensorsRef = collection(db, "users");
+      const q = query(collectionGroup(db, 'sensors'), where('sensorId', '==', sensorPhysicalId));
       const querySnapshot = await getDocs(q);
+
 
       if (querySnapshot.empty) {
         console.warn(`No sensor document found for physical ID: ${sensorPhysicalId}`);
@@ -106,17 +107,4 @@ export function connectMqtt() {
   });
 }
 
-// NOTE: In a real app, you would need to trigger this connection from a backend environment.
-// For example, in a Firebase Function:
-/*
-import * as functions from 'firebase-functions';
-import { connectMqtt } from './mqtt-service';
-
-export const mqttListener = functions.pubsub.schedule('every 1 minutes').onRun((context) => {
-  // This is a naive way to keep the connection alive. A better approach would be
-  // a long-running process or a different type of cloud function.
-  // For now, this demonstrates where the connection logic would live.
-  connectMqtt();
-  return null;
-});
-*/
+connectMqtt();
