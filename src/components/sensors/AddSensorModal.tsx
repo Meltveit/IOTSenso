@@ -120,14 +120,16 @@ export default function AddSensorModal({
       //   return;
       // }
       
-      const pseudoSensorType = (formData.sensorId.length % 4) switch {
-        0 => 'temperature',
-        1 => 'humidity',
-        2 => 'pressure',
-        3 => 'vibration',
-        default => 'temperature'
-      } as SensorType;
-
+      // Fikset: Bruker en enkel objektlookup istedenfor switch expression
+      const sensorTypeMap: Record<number, SensorType> = {
+        0: 'temperature',
+        1: 'weight',
+        2: 'moisture',
+        3: 'flow',
+        4: 'ir'
+      };
+      
+      const pseudoSensorType = sensorTypeMap[formData.sensorId.length % 5] || 'temperature';
 
       setFormData(prev => ({
         ...prev,
@@ -172,6 +174,7 @@ export default function AddSensorModal({
       // 1. Opprett sensor-dokument
       const sensorData = {
         userId: user.uid,
+        sensorId: formData.sensorId, // Fysisk sensor ID
         buildingId: formData.buildingId !== "none" ? formData.buildingId : undefined,
         type: formData.sensorType,
         name: formData.name,
@@ -189,10 +192,14 @@ export default function AddSensorModal({
         currentValue: 22,
         unit: getUnitForSensorType(formData.sensorType),
         createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+        lastCommunication: Timestamp.now(),
         equipmentType: 'Generic Equipment',
         data: Array.from({ length: 30 }, (_, i) => ({
           timestamp: Timestamp.fromMillis(Date.now() - (30 - i) * 60000),
-          value: Math.floor(Math.random() * 20) + 15
+          value: Math.floor(Math.random() * 20) + 15,
+          unit: getUnitForSensorType(formData.sensorType),
+          batteryLevel: 100
         }))
       };
 
@@ -215,7 +222,6 @@ export default function AddSensorModal({
       const newSensor: Sensor = {
         id: sensorRef.id,
         ...sensorData,
-        lastCommunication: Timestamp.now(),
       };
 
       if (onSensorAdded) {
@@ -324,46 +330,51 @@ export default function AddSensorModal({
           {/* STEG 2: Velg bygning */}
           {step === 2 && (
             <div className="space-y-4 pt-4">
-              <div className="bg-green-500/10 p-4 rounded-lg">
-                <p className="text-sm text-green-700">
-                  <strong>Sensor verifisert!</strong> Type: {getSensorTypeName(formData.sensorType)}
-                </p>
-              </div>
-
               <div className="space-y-2">
-                <Label htmlFor="building">Velg bygning (valgfritt)</Label>
+                <div className="bg-blue-50 p-4 rounded-lg mb-4">
+                  <div className="flex gap-3">
+                    <AlertCircle className="h-5 w-5 text-blue-600 shrink-0" />
+                    <div className="text-sm text-blue-900">
+                      <p className="font-semibold mb-1">Detektert sensortype</p>
+                      <p>{getSensorTypeName(formData.sensorType)}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <Label htmlFor="building">Velg bygning *</Label>
                 <Select
                   value={formData.buildingId}
                   onValueChange={(value) => setFormData({ ...formData, buildingId: value })}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Velg bygning" />
+                    <SelectValue placeholder="Velg en bygning" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">Ingen bygning</SelectItem>
-                    {buildings.map(building => (
+                    <SelectItem value="none">Ingen bygning (sensor uten bygning)</SelectItem>
+                    {buildings.map((building) => (
                       <SelectItem key={building.id} value={building.id}>
                         {building.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full mt-2"
+                  onClick={() => setShowAddBuildingModal(true)}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Legg til ny bygning
+                </Button>
               </div>
 
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={() => setShowAddBuildingModal(true)}
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                Opprett ny bygning
-              </Button>
-
               <DialogFooter className="pt-4">
-                <Button onClick={() => setStep(1)} variant="outline">
+                <Button onClick={() => setStep(1)} variant="outline" disabled={loading}>
                   Tilbake
                 </Button>
-                <Button onClick={selectBuilding}>
+                <Button onClick={selectBuilding} disabled={loading}>
                   Neste
                 </Button>
               </DialogFooter>
@@ -377,43 +388,42 @@ export default function AddSensorModal({
                 <Label htmlFor="name">Sensornavn *</Label>
                 <Input
                   id="name"
-                  placeholder="F.eks. 'Tak over inngangsparti'"
+                  placeholder="F.eks. Kjølerom 1"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  disabled={loading}
                 />
-                <p className="text-xs text-muted-foreground">
-                  Gi sensoren et beskrivende navn slik at du enkelt kan identifisere den.
-                </p>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="location">Spesifikk plassering (valgfritt)</Label>
+                <Label htmlFor="location">Plassering (valgfritt)</Label>
                 <Input
                   id="location"
-                  placeholder="F.eks. 'Sør-vest hjørne, ved pipa'"
+                  placeholder="F.eks. Underetasje, rom 103"
                   value={formData.location}
                   onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                  disabled={loading}
                 />
               </div>
 
               <DialogFooter className="pt-4">
-                <Button onClick={() => setStep(2)} variant="outline">
+                <Button onClick={() => setStep(2)} variant="outline" disabled={loading}>
                   Tilbake
                 </Button>
-                <Button onClick={setNameAndLocation}>
+                <Button onClick={setNameAndLocation} disabled={loading}>
                   Neste
                 </Button>
               </DialogFooter>
             </div>
           )}
 
-          {/* STEG 4: Varslings-grenser */}
+          {/* STEG 4: Varsler og aktivering */}
           {step === 4 && (
-            <div className="space-y-6 pt-4">
+            <div className="space-y-4 pt-4">
               <div className="space-y-4">
                 <div className="space-y-2">
                   <Label>
-                    Advarsel ved {formData.warningThreshold} {getUnitForSensorType(formData.sensorType)}
+                    Varsle ved {formData.warningThreshold} {getUnitForSensorType(formData.sensorType)}
                   </Label>
                   <Slider
                     value={[formData.warningThreshold]}

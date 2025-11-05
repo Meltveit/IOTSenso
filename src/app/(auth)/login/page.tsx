@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -27,12 +27,18 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  useEffect(() => {
+    if (!authLoading && user) {
+      router.push('/dashboard');
+    }
+  }, [user, authLoading, router]);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     try {
       await login(email, password);
-      router.push('/dashboard');
+      // Omdirigering vil bli håndtert av useEffect
     } catch (error: any) {
       let errorMessage = 'En feil oppstod ved innlogging. Prøv igjen.';
       if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
@@ -48,13 +54,8 @@ export default function LoginPage() {
     }
   };
 
-  if (authLoading) {
-    return <Loader2 className="animate-spin" />;
-  }
-
-  if (user) {
-    router.push('/dashboard');
-    return null;
+  if (authLoading || user) {
+    return <div className="flex justify-center items-center min-h-screen"><Loader2 className="animate-spin h-8 w-8" /></div>;
   }
 
   return (
