@@ -20,7 +20,7 @@ export default function PublicLayout({
                 </Link>
                 <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
                     <Link href="/home" className="text-muted-foreground hover:text-foreground transition-colors">Home</Link>
-                    <Link href="/products" className="text-foreground font-semibold hover:text-foreground/80 transition-colors">Products</Link>
+                    <Link href="/products" className="text-foreground font-semibold hover:text-foreground/80 transition-colors">Plans</Link>
                     <Link href="/about-us" className="text-muted-foreground hover:text-foreground transition-colors">About Us</Link>
                     <Link href="/how-it-works" className="text-muted-foreground hover:text-foreground transition-colors">How It Works</Link>
                 </nav>

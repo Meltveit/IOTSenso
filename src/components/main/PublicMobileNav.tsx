@@ -25,7 +25,7 @@ export default function PublicMobileNav() {
                 </div>
                 <div className="p-4 flex flex-col gap-4">
                     <Link href="/home" className="text-foreground font-semibold hover:text-foreground/80 transition-colors" onClick={() => setIsOpen(false)}>Home</Link>
-                    <Link href="/products" className="text-muted-foreground hover:text-foreground transition-colors" onClick={() => setIsOpen(false)}>Products</Link>
+                    <Link href="/products" className="text-muted-foreground hover:text-foreground transition-colors" onClick={() => setIsOpen(false)}>Plans</Link>
                     <Link href="/about-us" className="text-muted-foreground hover:text-foreground transition-colors" onClick={() => setIsOpen(false)}>About Us</Link>
                     <Link href="/how-it-works" className="text-muted-foreground hover:text-foreground transition-colors" onClick={() => setIsOpen(false)}>How It Works</Link>
                     <hr/>

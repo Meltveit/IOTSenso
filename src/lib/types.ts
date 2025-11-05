@@ -145,30 +145,24 @@ export interface AvailableSensor {
 }
 
 // ============================================
-// PRODUCT TYPES
+// PRODUCT TYPES (Refactored to Subscription Tiers)
 // ============================================
 
 export interface Product {
   id: string;
   name: string;
-  subtitle: string;
-  type: SensorType;
+  type: 'Starter Kit' | 'Professional' | 'Enterprise';
   description: string;
-  purpose: string[];
-  howItWorks: string;
-  specs: Record<string, string>;
-  useCases: string[];
-  importantFor: string[];
-  costSavings: Record<string, string>;
-  repaymentTime: string;
-  uniqueBenefits: string[];
-  price: number; // Engangskostnad for sensoren
-  monthlyFee: number; // Månedlig datakostnad (deprecated - nå inkludert i abonnement)
+  price: {
+    once: number;
+    monthly: number;
+  };
+  specs: string[];
   imageUrl?: string;
   imageHint?: string;
-  inStock: boolean;
   rating: number;
 }
+
 
 // ============================================
 // ORDER TYPES
