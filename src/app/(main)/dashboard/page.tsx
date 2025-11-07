@@ -35,10 +35,13 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (!user) {
+      console.log("❌ No user logged in");
       setLoading(false);
       return;
     }
 
+    console.log("✅ User logged in:", user.uid);
+    console.log("📡 Setting up Firestore listeners...");
     setLoading(true);
 
     // Real-time listener for sensors
@@ -46,17 +49,33 @@ export default function DashboardPage() {
       collection(db, "users", user.uid, "sensors")
     );
 
-    const unsubscribeSensors = onSnapshot(sensorsQuery, (snapshot) => {
-      const sensorsData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as Sensor[];
-      setSensors(sensorsData);
-      setLoading(false);
-    }, (error) => {
-      console.error("Error fetching sensors:", error);
-      setLoading(false);
-    });
+    const unsubscribeSensors = onSnapshot(
+      sensorsQuery, 
+      (snapshot) => {
+        console.log("📊 Sensors snapshot received");
+        console.log("   Documents:", snapshot.docs.length);
+        
+        const sensorsData = snapshot.docs.map(doc => {
+          const data = doc.data();
+          console.log("   Sensor:", doc.id, data);
+          
+          return {
+            id: doc.id,
+            ...data
+          };
+        }) as Sensor[];
+        
+        console.log("✅ Sensors loaded:", sensorsData.length);
+        setSensors(sensorsData);
+        setLoading(false);
+      }, 
+      (error) => {
+        console.error("❌ Error fetching sensors:", error);
+        console.error("   Code:", error.code);
+        console.error("   Message:", error.message);
+        setLoading(false);
+      }
+    );
 
     // Real-time listener for alerts
     const alertsQuery = query(
@@ -65,17 +84,27 @@ export default function DashboardPage() {
       limit(10)
     );
 
-    const unsubscribeAlerts = onSnapshot(alertsQuery, (snapshot) => {
-      const alertsData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as Alert[];
-      setAlerts(alertsData);
-    }, (error) => {
-      console.error("Error fetching alerts:", error);
-    });
+    const unsubscribeAlerts = onSnapshot(
+      alertsQuery, 
+      (snapshot) => {
+        console.log("🔔 Alerts snapshot received");
+        console.log("   Documents:", snapshot.docs.length);
+        
+        const alertsData = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as Alert[];
+        
+        console.log("✅ Alerts loaded:", alertsData.length);
+        setAlerts(alertsData);
+      }, 
+      (error) => {
+        console.error("❌ Error fetching alerts:", error);
+      }
+    );
 
     return () => {
+      console.log("🔌 Unsubscribing from Firestore listeners");
       unsubscribeSensors();
       unsubscribeAlerts();
     };
@@ -102,8 +131,10 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-96">
+      <div className="flex flex-col items-center justify-center h-96 gap-4">
         <Loader2 className="h-8 w-8 animate-spin" />
+        <p className="text-muted-foreground">Laster sensorer...</p>
+        <p className="text-xs text-muted-foreground">(Sjekk konsollen for debug info)</p>
       </div>
     );
   }
@@ -118,6 +149,14 @@ export default function DashboardPage() {
   
   return (
     <div className="flex flex-col gap-6">
+      {/* Debug info */}
+      <div className="bg-muted p-4 rounded-lg text-xs font-mono">
+        <p>🔍 Debug Info:</p>
+        <p>User ID: {user.uid}</p>
+        <p>Sensors loaded: {totalSensors}</p>
+        <p>Collection path: users/{user.uid}/sensors</p>
+      </div>
+
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatCard 
           title="Totalt sensorer" 
@@ -154,7 +193,10 @@ export default function DashboardPage() {
               <Card className="md:col-span-2 flex items-center justify-center h-64">
                 <CardContent className="text-center text-muted-foreground p-6">
                   <p className="font-semibold">Ingen sensorer funnet.</p>
-                  <p className="text-sm">Legg til en sensor for å begynne overvåking.</p>
+                  <p className="text-sm mb-2">Legg til en sensor for å begynne overvåking.</p>
+                  <p className="text-xs text-muted-foreground">
+                    Firebase path: users/{user.uid}/sensors
+                  </p>
                 </CardContent>
               </Card>
             )}
@@ -176,7 +218,14 @@ export default function DashboardPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {alerts.map((alert) => (
+                            {alerts.map((alert) => {
+                              let alertDate: Date;
+                              try {
+                                alertDate = alert.timestamp?.toDate ? alert.timestamp.toDate() : new Date(alert.timestamp as any);
+                              } catch (error) {
+                                alertDate = new Date();
+                              }
+                              return (
                                 <TableRow key={alert.id}>
                                     <TableCell>
                                         <Badge variant={getAlertBadgeVariant(alert.type)}>
@@ -185,10 +234,11 @@ export default function DashboardPage() {
                                     </TableCell>
                                     <TableCell className="font-medium">{alert.message}</TableCell>
                                     <TableCell className="text-muted-foreground text-sm">
-                                        {formatDistanceToNow(alert.timestamp.toDate(), { addSuffix: true })}
+                                        {formatDistanceToNow(alertDate, { addSuffix: true })}
                                     </TableCell>
                                 </TableRow>
-                            ))}
+                              );
+                            })}
                         </TableBody>
                     </Table>
                 ) : (
