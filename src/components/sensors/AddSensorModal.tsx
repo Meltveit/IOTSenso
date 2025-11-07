@@ -32,8 +32,7 @@ import {
   where, 
   getDocs,
   updateDoc,
-  doc, 
-  getDoc
+  doc
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/contexts/AuthContext";
@@ -105,38 +104,27 @@ export default function AddSensorModal({
       return;
     }
 
+    if (!formData.sensorType) {
+      toast.error("Vennligst velg sensortype");
+      return;
+    }
+
     setLoading(true);
     try {
-      const sensorIdPattern = /^SG-\d{4}-\d{6}$/;
-      if (!sensorIdPattern.test(formData.sensorId)) {
-        toast.error("Ugyldig Sensor-ID format. Skal være: SG-2024-XXXXXX");
+      // Check if sensor is already registered to this user
+      const sensorsQuery = query(
+        collection(db, "users", user?.uid || "", "sensors"),
+        where("sensorId", "==", formData.sensorId)
+      );
+      const existingSensors = await getDocs(sensorsQuery);
+
+      if (!existingSensors.empty) {
+        toast.error("Denne sensoren er allerede registrert på din konto.");
         setLoading(false);
         return;
       }
       
-      const sensorDocRef = doc(db, "available_sensors", formData.sensorId);
-      const sensorDocSnap = await getDoc(sensorDocRef);
-
-      if (!sensorDocSnap.exists()) {
-        toast.error("Sensor-ID ikke funnet. Sjekk at du har skrevet riktig ID.");
-        setLoading(false);
-        return;
-      }
-
-      const sensorData = sensorDocSnap.data();
-
-      if (sensorData.registeredToUser) {
-        toast.error("Denne sensoren er allerede registrert til en bruker.");
-        setLoading(false);
-        return;
-      }
-
-      setFormData(prev => ({
-        ...prev,
-        sensorType: sensorData.type as SensorType
-      }));
-      
-      toast.success("Sensor-ID verifisert!");
+      toast.success("Sensor-ID godkjent!");
       setStep(2);
       
     } catch (error) {
@@ -185,29 +173,18 @@ export default function AddSensorModal({
           ...(formData.alertSms ? ['sms' as const] : [])
         ],
         batteryLevel: 100,
-        status: 'ok' as const,
-        currentValue: 22,
+        status: 'offline' as const, // Start as offline until first data received
+        currentValue: 0,
         unit: getUnitForSensorType(formData.sensorType),
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
-        lastCommunication: Timestamp.now(),
-        equipmentType: 'Generic Equipment',
-        data: Array.from({ length: 30 }, (_, i) => ({
-          timestamp: Timestamp.fromMillis(Date.now() - (30 - i) * 60000),
-          value: Math.floor(Math.random() * 20) + 15,
-          unit: getUnitForSensorType(formData.sensorType),
-          batteryLevel: 100
-        }))
+        lastCommunication: null,
+        equipmentType: 'Generic Equipment'
       };
 
       const sensorRef = await addDoc(sensorsCollectionRef, sensorData);
-      
-      const availableSensorRef = doc(db, "available_sensors", formData.sensorId);
-      await updateDoc(availableSensorRef, {
-        registeredToUser: user.uid,
-        registeredAt: Timestamp.now()
-      });
 
+      // Update building sensor count if applicable
       if (formData.buildingId && formData.buildingId !== "none") {
         const buildingRef = doc(db, "users", user.uid, "buildings", formData.buildingId);
         const building = buildings.find(b => b.id === formData.buildingId);
@@ -296,7 +273,7 @@ export default function AddSensorModal({
                   <AlertCircle className="h-5 w-5 text-primary shrink-0" />
                   <div className="text-sm text-primary/90">
                     <p className="font-semibold mb-1">Finn Sensor-ID</p>
-                    <p>Sensor-ID står på etiketten på sensoren eller på esken den kom i. Formatet er vanligvis `SG-XXXX-XXXXXX`.</p>
+                    <p>Sensor-ID står på etiketten på sensoren eller i dokumentasjonen. Dette kan være f.eks. DevEUI eller annen unik identifikator.</p>
                   </div>
                 </div>
               </div>
@@ -305,11 +282,30 @@ export default function AddSensorModal({
                 <Label htmlFor="sensorId">Sensor-ID *</Label>
                 <Input
                   id="sensorId"
-                  placeholder="F.eks. SG-2024-001234"
+                  placeholder="F.eks. BC9740FFFE10D33A eller SG-2024-001234"
                   value={formData.sensorId}
                   onChange={(e) => setFormData({ ...formData, sensorId: e.target.value.toUpperCase() })}
                   disabled={loading}
                 />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="sensorType">Sensortype *</Label>
+                <Select
+                  value={formData.sensorType}
+                  onValueChange={(value) => setFormData({ ...formData, sensorType: value as SensorType })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Velg sensortype" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="temperature">Temperatursensor</SelectItem>
+                    <SelectItem value="weight">Vektsensor</SelectItem>
+                    <SelectItem value="ir">Avstandssensor (IR)</SelectItem>
+                    <SelectItem value="moisture">Fuktsensor</SelectItem>
+                    <SelectItem value="flow">Flowsensor</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <DialogFooter className="pt-4">
@@ -320,7 +316,7 @@ export default function AddSensorModal({
                 >
                   Avbryt
                 </Button>
-                <Button onClick={verifySensorId} disabled={loading}>
+                <Button onClick={verifySensorId} disabled={loading || !formData.sensorId || !formData.sensorType}>
                   {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
                   {loading ? "Verifiserer..." : "Neste"}
                 </Button>
@@ -335,7 +331,7 @@ export default function AddSensorModal({
                   <div className="flex gap-3">
                     <AlertCircle className="h-5 w-5 text-blue-600 shrink-0" />
                     <div className="text-sm text-blue-900">
-                      <p className="font-semibold mb-1">Detektert sensortype</p>
+                      <p className="font-semibold mb-1">Valgt sensortype</p>
                       <p>{getSensorTypeName(formData.sensorType)}</p>
                     </div>
                   </div>
@@ -387,7 +383,7 @@ export default function AddSensorModal({
                 <Label htmlFor="name">Sensornavn *</Label>
                 <Input
                   id="name"
-                  placeholder="F.eks. Kjølerom 1"
+                  placeholder="F.eks. COMTAC Cluey Test"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   disabled={loading}
@@ -398,7 +394,7 @@ export default function AddSensorModal({
                 <Label htmlFor="location">Plassering (valgfritt)</Label>
                 <Input
                   id="location"
-                  placeholder="F.eks. Underetasje, rom 103"
+                  placeholder="F.eks. Kjeller"
                   value={formData.location}
                   onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                   disabled={loading}
@@ -409,7 +405,7 @@ export default function AddSensorModal({
                 <Button onClick={() => setStep(2)} variant="outline" disabled={loading}>
                   Tilbake
                 </Button>
-                <Button onClick={setNameAndLocation} disabled={loading}>
+                <Button onClick={setNameAndLocation} disabled={loading || !formData.name}>
                   Neste
                 </Button>
               </DialogFooter>
@@ -419,65 +415,65 @@ export default function AddSensorModal({
           {step === 4 && (
             <div className="space-y-4 pt-4">
               <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label>
-                    Varsle ved {formData.warningThreshold} {getUnitForSensorType(formData.sensorType)}
+                <div>
+                  <Label htmlFor="warning-threshold">
+                    Advarselsgrense: {formData.warningThreshold} {getUnitForSensorType(formData.sensorType)}
                   </Label>
                   <Slider
+                    id="warning-threshold"
+                    min={0}
+                    max={200}
+                    step={1}
                     value={[formData.warningThreshold]}
-                    onValueChange={([value]) => setFormData({ ...formData, warningThreshold: value })}
-                    min={0}
-                    max={formData.sensorType === 'temperature' ? 100 : 500}
-                    step={5}
+                    onValueChange={(value) => setFormData({ ...formData, warningThreshold: value[0] })}
+                    className="mt-2"
+                    disabled={loading}
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label>
-                    Kritisk ved {formData.criticalThreshold} {getUnitForSensorType(formData.sensorType)}
+                <div>
+                  <Label htmlFor="critical-threshold">
+                    Kritisk grense: {formData.criticalThreshold} {getUnitForSensorType(formData.sensorType)}
                   </Label>
                   <Slider
-                    value={[formData.criticalThreshold]}
-                    onValueChange={([value]) => setFormData({ ...formData, criticalThreshold: value })}
+                    id="critical-threshold"
                     min={0}
-                    max={formData.sensorType === 'temperature' ? 120 : 600}
-                    step={5}
+                    max={200}
+                    step={1}
+                    value={[formData.criticalThreshold]}
+                    onValueChange={(value) => setFormData({ ...formData, criticalThreshold: value[0] })}
+                    className="mt-2"
+                    disabled={loading}
                   />
                 </div>
-              </div>
 
-              <div className="space-y-3">
-                <Label>Varsle meg via:</Label>
                 <div className="space-y-2">
+                  <Label>Varslingsmetoder</Label>
                   <div className="flex items-center space-x-2">
                     <Checkbox
-                      id="email"
+                      id="alert-email"
                       checked={formData.alertEmail}
                       onCheckedChange={(checked) => 
                         setFormData({ ...formData, alertEmail: checked as boolean })
                       }
+                      disabled={loading}
                     />
-                    <label
-                      htmlFor="email"
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                    >
+                    <Label htmlFor="alert-email" className="font-normal cursor-pointer">
                       E-post
-                    </label>
+                    </Label>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Checkbox
-                      id="sms"
+                      id="alert-sms"
                       checked={formData.alertSms}
                       onCheckedChange={(checked) => 
                         setFormData({ ...formData, alertSms: checked as boolean })
                       }
+                      disabled={loading}
                     />
-                    <label
-                      htmlFor="sms"
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                    >
+                    <Label htmlFor="alert-sms" className="font-normal cursor-pointer">
                       SMS
-                    </label>
+                    </Label>
                   </div>
                 </div>
               </div>
@@ -488,7 +484,7 @@ export default function AddSensorModal({
                 </Button>
                 <Button onClick={activateSensor} disabled={loading}>
                   {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
-                  {loading ? "Aktiverer..." : "Fullfør og aktiver"}
+                  {loading ? "Aktiverer..." : "Aktiver sensor"}
                 </Button>
               </DialogFooter>
             </div>
@@ -500,14 +496,11 @@ export default function AddSensorModal({
         open={showAddBuildingModal}
         onOpenChange={setShowAddBuildingModal}
         onBuildingAdded={(building) => {
-          loadBuildings().then(() => {
-            setFormData({ ...formData, buildingId: building.id }); 
-            toast.success("Bygning opprettet! Den er nå valgt for sensoren din.");
-          });
+          setBuildings([...buildings, building]);
+          setFormData({ ...formData, buildingId: building.id });
+          setShowAddBuildingModal(false);
         }}
       />
     </>
   );
 }
-
-    
