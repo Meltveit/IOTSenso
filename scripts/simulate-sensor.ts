@@ -9,7 +9,7 @@ const SEND_INTERVAL_MS = 60000; // 60 seconds
 
 const options: mqtt.IClientOptions = {
   host: process.env.HIVEMQ_URL,
-  port: parseInt(process.env.HIVEMQ_PORT || '8883'),
+  port: parseInt(process.env.HIVEMQ_PORT || '1883'),
   protocol: 'mqtts',
   username: process.env.HIVEMQ_USERNAME,
   password: process.env.HIVEMQ_PASSWORD,
