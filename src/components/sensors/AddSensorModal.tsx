@@ -37,7 +37,7 @@ import {
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { Plus, AlertCircle, Loader2 } from "lucide-react";
+import { Plus, AlertCircle, Loader2, CheckCircle2, Clock } from "lucide-react";
 import AddBuildingModal from "@/components/buildings/AddBuildingModal";
 
 interface AddSensorModalProps {
@@ -123,6 +123,19 @@ export default function AddSensorModal({
         setLoading(false);
         return;
       }
+
+      // Check if sensor is registered to another user
+      const allSensorsQuery = query(
+        collection(db, "sensors"),
+        where("sensorId", "==", formData.sensorId)
+      );
+      const allSensors = await getDocs(allSensorsQuery);
+
+      if (!allSensors.empty) {
+        toast.error("Denne sensor-ID er allerede i bruk av en annen bruker.");
+        setLoading(false);
+        return;
+      }
       
       toast.success("Sensor-ID godkjent!");
       setStep(2);
@@ -172,8 +185,8 @@ export default function AddSensorModal({
           ...(formData.alertEmail ? ['email' as const] : []),
           ...(formData.alertSms ? ['sms' as const] : [])
         ],
-        batteryLevel: 100,
-        status: 'offline' as const, // Start as offline until first data received
+        batteryLevel: 0,
+        status: 'pending' as const, // NEW: Start as pending
         currentValue: 0,
         unit: getUnitForSensorType(formData.sensorType),
         createdAt: Timestamp.now(),
@@ -183,6 +196,13 @@ export default function AddSensorModal({
       };
 
       const sensorRef = await addDoc(sensorsCollectionRef, sensorData);
+
+      // Also add to global sensors collection for cross-user duplicate checking
+      await addDoc(collection(db, "sensors"), {
+        sensorId: formData.sensorId,
+        userId: user.uid,
+        registeredAt: Timestamp.now()
+      });
 
       // Update building sensor count if applicable
       if (formData.buildingId && formData.buildingId !== "none") {
@@ -196,7 +216,13 @@ export default function AddSensorModal({
         }
       }
 
-      toast.success(`${formData.name} er aktivert og klar til bruk!`);
+      toast.success(
+        `${formData.name} er lagt til!`, 
+        {
+          description: "Sensoren venter på første melding fra enheten. Status vil oppdateres automatisk når data mottas.",
+          duration: 5000
+        }
+      );
       
       const newSensor: Sensor = {
         id: sensorRef.id,
@@ -273,7 +299,8 @@ export default function AddSensorModal({
                   <AlertCircle className="h-5 w-5 text-primary shrink-0" />
                   <div className="text-sm text-primary/90">
                     <p className="font-semibold mb-1">Finn Sensor-ID</p>
-                    <p>Sensor-ID står på etiketten på sensoren eller i dokumentasjonen. Dette kan være f.eks. DevEUI eller annen unik identifikator.</p>
+                    <p>Sensor-ID står på etiketten på sensoren eller i dokumentasjonen. Dette kan være DevEUI, MAC-adresse eller annen unik identifikator.</p>
+                    <p className="mt-2 text-xs">Eksempel: BC9740FFFE10D33A eller SG-2024-001234</p>
                   </div>
                 </div>
               </div>
@@ -282,9 +309,9 @@ export default function AddSensorModal({
                 <Label htmlFor="sensorId">Sensor-ID *</Label>
                 <Input
                   id="sensorId"
-                  placeholder="F.eks. BC9740FFFE10D33A eller SG-2024-001234"
+                  placeholder="F.eks. BC9740FFFE10D33A"
                   value={formData.sensorId}
-                  onChange={(e) => setFormData({ ...formData, sensorId: e.target.value.toUpperCase() })}
+                  onChange={(e) => setFormData({ ...formData, sensorId: e.target.value.toUpperCase().trim() })}
                   disabled={loading}
                 />
               </div>
@@ -329,7 +356,7 @@ export default function AddSensorModal({
               <div className="space-y-2">
                 <div className="bg-blue-50 p-4 rounded-lg mb-4">
                   <div className="flex gap-3">
-                    <AlertCircle className="h-5 w-5 text-blue-600 shrink-0" />
+                    <CheckCircle2 className="h-5 w-5 text-blue-600 shrink-0" />
                     <div className="text-sm text-blue-900">
                       <p className="font-semibold mb-1">Valgt sensortype</p>
                       <p>{getSensorTypeName(formData.sensorType)}</p>
@@ -383,7 +410,7 @@ export default function AddSensorModal({
                 <Label htmlFor="name">Sensornavn *</Label>
                 <Input
                   id="name"
-                  placeholder="F.eks. COMTAC Cluey Test"
+                  placeholder="F.eks. Kjølerom 1"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   disabled={loading}
@@ -476,6 +503,16 @@ export default function AddSensorModal({
                     </Label>
                   </div>
                 </div>
+
+                <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
+                  <div className="flex gap-3">
+                    <Clock className="h-5 w-5 text-yellow-600 shrink-0 mt-0.5" />
+                    <div className="text-sm text-yellow-900">
+                      <p className="font-semibold mb-1">Venter på første melding</p>
+                      <p>Sensoren vil starte med status "Pending" og aktiveres automatisk når første data mottas fra enheten.</p>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <DialogFooter className="pt-4">
@@ -484,7 +521,7 @@ export default function AddSensorModal({
                 </Button>
                 <Button onClick={activateSensor} disabled={loading}>
                   {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
-                  {loading ? "Aktiverer..." : "Aktiver sensor"}
+                  {loading ? "Legger til..." : "Legg til sensor"}
                 </Button>
               </DialogFooter>
             </div>

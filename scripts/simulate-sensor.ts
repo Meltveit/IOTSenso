@@ -2,9 +2,9 @@ import 'dotenv/config';
 import mqtt from 'mqtt';
 
 // --- Configuration ---
-const SENSOR_ID = 'SG-2024-000001'; // The ID of the sensor you are simulating
+const SENSOR_ID = 'BC9740FFFE10D33A'; // Cluey DevEUI
 const TOPIC = `sensors/${SENSOR_ID}/data`;
-const SEND_INTERVAL_MS = 5000; // 5 seconds
+const SEND_INTERVAL_MS = 60000; // 60 seconds
 // ---------------------
 
 const options: mqtt.IClientOptions = {
@@ -15,27 +15,32 @@ const options: mqtt.IClientOptions = {
   password: process.env.HIVEMQ_PASSWORD,
 };
 
-console.log('--- Sensor Simulator ---');
-console.log(`Attempting to connect to HiveMQ Broker for sensor: ${SENSOR_ID}`);
+console.log('--- Cluey Sensor Simulator ---');
+console.log(`Sensor ID: ${SENSOR_ID}`);
+console.log(`Attempting to connect to: ${process.env.HIVEMQ_URL}:${process.env.HIVEMQ_PORT}`);
 
 const client = mqtt.connect(options);
 
 client.on('connect', () => {
   console.log('✅ Simulator connected to HiveMQ!');
-  console.log(`Will start sending data every ${SEND_INTERVAL_MS / 1000} seconds to topic: ${TOPIC}`);
+  console.log(`📡 Publishing to topic: ${TOPIC}`);
+  console.log(`⏱️  Interval: ${SEND_INTERVAL_MS / 1000} seconds\n`);
   
-  // Start sending data on an interval
+  // Send first message immediately
+  sendData();
+  
+  // Then send on interval
   setInterval(sendData, SEND_INTERVAL_MS);
 });
 
 function sendData() {
-  // Simulate some realistic sensor data
-  const simulatedValue = parseFloat((20 + Math.random() * 15).toFixed(2)); // e.g., temperature between 20-35
-  const batteryLevel = parseFloat((90 - Math.random() * 10).toFixed(2)); // e.g., battery between 80-90%
+  // Simulate realistic temperature data (15-30°C)
+  const temperature = parseFloat((15 + Math.random() * 15).toFixed(2));
+  const batteryLevel = parseFloat((85 + Math.random() * 15).toFixed(1)); // 85-100%
 
   const payload = {
-    value: simulatedValue,
-    unit: '°C', // Change this unit based on the sensor type you're faking
+    value: temperature,
+    unit: '°C',
     battery: batteryLevel,
     timestamp: new Date().toISOString(),
   };
@@ -44,18 +49,29 @@ function sendData() {
 
   client.publish(TOPIC, message, (err) => {
     if (err) {
-      console.error('❌ Failed to publish message:', err);
+      console.error('❌ Failed to publish:', err.message);
     } else {
-      console.log(`- Sent: ${message}`);
+      console.log(`📤 [${new Date().toLocaleTimeString()}] Sent: ${message}`);
     }
   });
 }
 
 client.on('error', (err) => {
-  console.error('MQTT Client Error:', err);
-  client.end();
+  console.error('❌ MQTT Client Error:', err.message);
+  process.exit(1);
 });
 
 client.on('close', () => {
-  console.log('Connection closed.');
+  console.log('⚠️  Connection closed.');
+});
+
+client.on('offline', () => {
+  console.log('⚠️  Client went offline. Reconnecting...');
+});
+
+// Graceful shutdown
+process.on('SIGINT', () => {
+  console.log('\n👋 Shutting down simulator...');
+  client.end();
+  process.exit(0);
 });

@@ -17,6 +17,7 @@ import {
   WifiOff 
 } from "lucide-react";
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 
 interface BuildingCardProps {
   building: Building;
@@ -31,17 +32,25 @@ const buildingIcons = {
   other: Home
 };
 
-// FIX: Returner riktig Badge variant type
-function getBuildingStatusColor(sensors: Sensor[]): "default" | "destructive" | "secondary" {
-  if (sensors.some(s => s.status === 'critical')) return 'destructive';
-  if (sensors.some(s => s.status === 'warning')) return 'secondary';
-  if (sensors.some(s => s.status === 'offline')) return 'secondary';
-  return 'default';
+function getBuildingStatus(sensors: Sensor[]): { variant: "default" | "destructive" | "secondary" | "outline", text: string } {
+  if (sensors.length === 0) {
+    return { variant: "outline", text: 'Ingen sensorer' };
+  }
+  if (sensors.some(s => s.status === 'critical')) {
+    return { variant: 'destructive', text: 'Kritisk' };
+  }
+  if (sensors.some(s => s.status === 'warning')) {
+    return { variant: 'secondary', text: 'Advarsel' };
+  }
+  if (sensors.some(s => s.status === 'offline')) {
+    return { variant: 'secondary', text: 'Offline' };
+  }
+  return { variant: 'default', text: 'Normal' };
 }
 
 export default function BuildingCard({ building, sensors }: BuildingCardProps) {
   const Icon = buildingIcons[building.type || 'residential'];
-  const statusColor = getBuildingStatusColor(sensors);
+  const status = getBuildingStatus(sensors);
   
   const activeCount = sensors.filter(s => s.status === 'ok').length;
   const warningCount = sensors.filter(s => s.status === 'warning').length;
@@ -66,8 +75,8 @@ export default function BuildingCard({ building, sensors }: BuildingCardProps) {
               )}
             </div>
           </div>
-          <Badge variant={statusColor}>
-            {sensors.length} {sensors.length === 1 ? 'sensor' : 'sensorer'}
+          <Badge variant={status.variant}>
+            {status.text}
           </Badge>
         </div>
       </CardHeader>
@@ -108,12 +117,12 @@ export default function BuildingCard({ building, sensors }: BuildingCardProps) {
               className="flex items-center justify-between p-2 bg-secondary/50 rounded-lg"
             >
               <div className="flex items-center gap-2">
-                <div className={`h-2 w-2 rounded-full ${
-                  sensor.status === 'ok' ? 'bg-green-500' :
-                  sensor.status === 'warning' ? 'bg-yellow-500' :
-                  sensor.status === 'critical' ? 'bg-red-500' :
-                  'bg-gray-500'
-                }`} />
+                <div className={cn("h-2 w-2 rounded-full", {
+                  'bg-green-500': sensor.status === 'ok',
+                  'bg-yellow-500': sensor.status === 'warning',
+                  'bg-red-500': sensor.status === 'critical',
+                  'bg-gray-500': sensor.status === 'offline' || sensor.status === 'pending',
+                })} />
                 <span className="text-sm font-medium">{sensor.name}</span>
               </div>
               <span className="text-sm text-muted-foreground">
@@ -137,7 +146,7 @@ export default function BuildingCard({ building, sensors }: BuildingCardProps) {
           </Link>
         </Button>
         <Button className="flex-1" asChild>
-          <Link href={`/buildings/${building.id}/sensors`}>
+          <Link href={`/sensors?buildingId=${building.id}`}>
             Administrer sensorer
           </Link>
         </Button>
