@@ -1,5 +1,4 @@
-// components/sensors/AddSensorModal.tsx
-// FIXED: Removed global /sensors collection access that violated security rules
+// Filsti: src/components/sensors/AddSensorModal.tsx
 
 "use client";
 
@@ -35,7 +34,7 @@ import {
   getDocs,
   updateDoc,
   doc,
-  collectionGroup  // ← ADDED: For cross-user sensor search
+  collectionGroup
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/contexts/AuthContext";
@@ -127,8 +126,7 @@ export default function AddSensorModal({
         return;
       }
 
-      // ✅ FIXED: Use collectionGroup to search across ALL users' sensors
-      // This works with security rules: users/{userId}/sensors/{sensorId}
+      // Use collectionGroup to search across ALL users' sensors
       const allSensorsQuery = query(
         collectionGroup(db, "sensors"),
         where("sensorId", "==", formData.sensorId)
@@ -183,7 +181,9 @@ export default function AddSensorModal({
         location: formData.location || undefined,
         thresholds: {
           warning: formData.warningThreshold,
-          critical: formData.criticalThreshold
+          critical: formData.criticalThreshold,
+          upper: undefined,
+          lower: undefined,
         },
         alertMethods: [
           ...(formData.alertEmail ? ['email' as const] : []),
@@ -200,9 +200,6 @@ export default function AddSensorModal({
       };
 
       const sensorRef = await addDoc(sensorsCollectionRef, sensorData);
-
-      // ✅ REMOVED: No longer adding to global /sensors collection
-      // Cross-user duplicate checking now uses collectionGroup query instead
 
       // Update building sensor count if applicable
       if (formData.buildingId && formData.buildingId !== "none") {
@@ -467,9 +464,9 @@ export default function AddSensorModal({
                   <Slider
                     value={[formData.criticalThreshold]}
                     onValueChange={([value]) => setFormData({ ...formData, criticalThreshold: value })}
-                    min={0}
-                    max={200}
-                    step={5}
+                    min={-20}
+                    max={100}
+                    step={1}
                   />
                 </div>
               </div>

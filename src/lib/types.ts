@@ -1,3 +1,5 @@
+// Filsti: src/lib/types.ts
+
 import { FieldValue, Timestamp } from 'firebase/firestore';
 
 // ============================================
@@ -29,7 +31,7 @@ export interface PrivateUser extends BaseUser {
 export interface BusinessUser extends BaseUser {
   accountType: 'business';
   companyName: string;
-  organizationNumber: string; // 9-digit org number
+  organizationNumber: string;
   contactPerson: {
     firstName: string;
     lastName: string;
@@ -50,15 +52,26 @@ export interface BusinessUser extends BaseUser {
 export type User = PrivateUser | BusinessUser;
 
 // ============================================
-// BUILDING TYPES (NYTT!)
+// CAMERA TYPES
+// ============================================
+
+export interface Camera {
+  id: string;
+  name: string;
+  url: string;
+  addedAt: Timestamp;
+}
+
+// ============================================
+// BUILDING TYPES
 // ============================================
 
 export type BuildingType = 'residential' | 'commercial' | 'industrial' | 'cabin' | 'other';
 
 export interface Building {
   id: string;
-  userId: string; // Eier av bygningen
-  name: string; // "Hovedbygning", "Garasje", "Hytte på fjellet"
+  userId: string;
+  name: string;
   type?: BuildingType;
   address?: {
     street: string;
@@ -66,14 +79,15 @@ export interface Building {
     city: string;
   };
   imageUrl?: string;
-  notes?: string; // Ekstra notater om bygningen
+  notes?: string;
   createdAt: Timestamp;
   updatedAt: Timestamp;
-  sensorCount: number; // Teller - oppdateres automatisk
+  sensorCount: number;
+  cameras?: Camera[];  // Støtte for IP-kameraer
 }
 
 // ============================================
-// SENSOR TYPES (OPPDATERT!)
+// SENSOR TYPES - OPPDATERT MED UPPER/LOWER THRESHOLDS
 // ============================================
 
 export type SensorType = 'weight' | 'ir' | 'moisture' | 'flow' | 'temperature';
@@ -81,34 +95,36 @@ export type SensorStatus = 'ok' | 'warning' | 'critical' | 'offline' | 'pending'
 
 export interface Sensor {
   id: string;
-  sensorId: string; // Fysisk ID på sensor (f.eks. SG-2024-001234)
+  sensorId: string;
   userId: string;
-  buildingId?: string; // NYTT - referanse til bygning (valgfritt)
+  buildingId?: string;
   type: SensorType;
   name: string;
-  location?: string; // Spesifikk plassering innenfor bygning
+  location?: string;
   thresholds: {
-    warning: number;
-    critical: number;
+    upper?: number;      // Øvre grense (varsel hvis over)
+    lower?: number;      // Nedre grense (varsel hvis under)
+    warning: number;     // Eksisterende warning threshold
+    critical: number;    // Eksisterende critical threshold
   };
   alertMethods: ('email' | 'sms')[];
-  batteryLevel: number; // 0-100
-  signalStrength?: number; // dBm
+  batteryLevel: number;
+  signalStrength?: number;
   lastCommunication: Timestamp | null;
   status: SensorStatus;
   currentValue: number;
-  unit: string; // 'kg', 'cm', '%', etc.
+  unit: string;
   createdAt: Timestamp;
   updatedAt: Timestamp;
   equipmentType?: string;
   data?: SensorReading[];
-  maintenanceHistory?: any[]; // For predictive analysis
+  maintenanceHistory?: any[];
 }
 
 export interface SensorReading {
   value: number;
   unit: string;
-  timestamp: Timestamp;
+  timestamp: Date | Timestamp;
   batteryLevel: number;
 }
 
@@ -116,13 +132,13 @@ export interface SensorReading {
 // ALERT TYPES
 // ============================================
 
-export type AlertType = 'warning' | 'critical' | 'info' | 'battery';
+export type AlertType = 'warning' | 'critical' | 'info' | 'battery' | 'upper_limit' | 'lower_limit';
 
 export interface Alert {
   id: string;
   sensorId: string;
   userId: string;
-  buildingId?: string; // NYTT - for å filtrere varsler per bygning
+  buildingId?: string;
   type: AlertType;
   message: string;
   timestamp: Timestamp;
@@ -131,21 +147,21 @@ export interface Alert {
 }
 
 // ============================================
-// AVAILABLE SENSORS (Sensor-inventory)
+// AVAILABLE SENSORS
 // ============================================
 
 export interface AvailableSensor {
-  sensorId: string; // Fysisk ID (f.eks. SG-2024-001234)
+  sensorId: string;
   type: SensorType;
   manufacturedAt: Timestamp;
-  registeredToUser?: string; // userId hvis allerede registrert
+  registeredToUser?: string;
   registeredAt?: Timestamp;
   simCardNumber?: string;
   firmwareVersion: string;
 }
 
 // ============================================
-// PRODUCT TYPES (Refactored to Subscription Tiers)
+// PRODUCT TYPES
 // ============================================
 
 export interface Product {
@@ -163,7 +179,6 @@ export interface Product {
   rating: number;
 }
 
-
 // ============================================
 // ORDER TYPES
 // ============================================
@@ -173,7 +188,7 @@ export type OrderStatus = 'pending' | 'paid' | 'shipped' | 'delivered';
 export interface Order {
   id: string;
   userId: string;
-  products: string[]; // Product IDs
+  products: string[];
   totalAmount: number;
   status: OrderStatus;
   createdAt: Timestamp;
@@ -184,9 +199,8 @@ export interface Order {
   };
 }
 
-
 // ============================================
-// FORM TYPES (for frontend)
+// FORM TYPES
 // ============================================
 
 export interface SignupFormData {
@@ -196,28 +210,19 @@ export interface SignupFormData {
   password: string;
   confirmPassword: string;
   acceptTerms: boolean;
-  
-  // Private user fields
   firstName?: string;
   lastName?: string;
-  
-  // Business user fields
   companyName?: string;
   organizationNumber?: string;
   contactPersonFirstName?: string;
   contactPersonLastName?: string;
   contactPersonTitle?: string;
-  billingAddressStreet?: string;
-  billingAddressPostalCode?: string;
-  billingAddressCity?: string;
+  billingStreet?: string;
+  billingPostalCode?: string;
+  billingCity?: string;
   invoiceEmail?: string;
   numberOfSensors?: number;
   department?: string;
   referenceNumber?: string;
-}
-
-export interface LoginFormData {
-  email: string;
-  password: string;
-  rememberMe: boolean;
+  vatNumber?: string;
 }

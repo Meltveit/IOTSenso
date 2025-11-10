@@ -1,37 +1,66 @@
+// Filsti: src/app/(main)/buildings/[id]/page.tsx
+
 'use client';
 
 import { useEffect, useState } from 'react';
 import { notFound, useParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, onSnapshot, collection, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { Building } from '@/lib/types';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import type { Building, Sensor } from '@/lib/types';
 import { Loader2 } from 'lucide-react';
+import BuildingDetailsClient from '@/components/buildings/BuildingDetailsClient';
 
 export default function BuildingDetailPage() {
   const { id } = useParams();
   const { user } = useAuth();
   const [building, setBuilding] = useState<Building | null>(null);
+  const [sensors, setSensors] = useState<Sensor[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user || !id) return;
+    if (!user || !id) {
+      setLoading(false);
+      return;
+    }
 
-    const fetchBuilding = async () => {
-      setLoading(true);
-      const docRef = doc(db, 'users', user.uid, 'buildings', id as string);
-      const docSnap = await getDoc(docRef);
+    setLoading(true);
 
+    // Real-time listener for building
+    const buildingRef = doc(db, 'users', user.uid, 'buildings', id as string);
+    
+    const unsubscribeBuilding = onSnapshot(buildingRef, (docSnap) => {
       if (docSnap.exists()) {
         setBuilding({ id: docSnap.id, ...docSnap.data() } as Building);
       } else {
-        // Handle not found
+        setBuilding(null);
       }
       setLoading(false);
-    };
+    }, (error) => {
+      console.error('Error fetching building:', error);
+      setLoading(false);
+    });
 
-    fetchBuilding();
+    // Real-time listener for sensors in this building
+    const sensorsQuery = query(
+      collection(db, 'users', user.uid, 'sensors'),
+      where('buildingId', '==', id)
+    );
+
+    const unsubscribeSensors = onSnapshot(sensorsQuery, (snapshot) => {
+      const sensorsData = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Sensor[];
+      setSensors(sensorsData);
+    }, (error) => {
+      console.error('Error fetching sensors:', error);
+    });
+
+    return () => {
+      unsubscribeBuilding();
+      unsubscribeSensors();
+    };
   }, [user, id]);
 
   if (loading) {
@@ -46,24 +75,5 @@ export default function BuildingDetailPage() {
     notFound();
   }
 
-  return (
-    <div className="container mx-auto p-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="font-headline text-3xl">{building.name}</CardTitle>
-          <CardDescription>
-            Detaljer og sensorstatus for {building.name}.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p>
-            Dette er detaljsiden for bygningen. Her vil du se grafer, sensorlister og annen relevant informasjon for denne spesifikke bygningen.
-          </p>
-          <p className="mt-4 text-sm text-muted-foreground">
-            Bygnings-ID: {building.id}
-          </p>
-        </CardContent>
-      </Card>
-    </div>
-  );
+  return <BuildingDetailsClient building={building} sensors={sensors} />;
 }
