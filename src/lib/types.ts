@@ -60,6 +60,7 @@ export interface Camera {
   name: string;
   url: string;
   addedAt: Timestamp;
+  streamType?: 'iframe' | 'mjpeg' | 'hls' | 'image';
 }
 
 // ============================================

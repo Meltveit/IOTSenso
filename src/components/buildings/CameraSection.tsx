@@ -15,6 +15,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -29,16 +36,78 @@ import {
   RefreshCw,
   Maximize2,
   X,
+  AlertCircle,
 } from "lucide-react";
 import { doc, updateDoc, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
+
+// Utvid Camera type til å inkludere stream type
+interface CameraWithType extends Camera {
+  streamType?: 'iframe' | 'mjpeg' | 'hls' | 'image';
+}
 
 interface CameraSectionProps {
   buildingId: string;
   cameras: Camera[];
+}
+
+// Komponent for å vise kamera basert på type
+function CameraStream({ camera, refreshKey }: { camera: CameraWithType; refreshKey: number }) {
+  const streamType = camera.streamType || 'iframe';
+
+  switch (streamType) {
+    case 'mjpeg':
+      // MJPEG stream (ofte brukt av IP-kameraer)
+      return (
+        <img
+          key={`${camera.id}-${refreshKey}`}
+          src={camera.url}
+          alt={camera.name}
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+      );
+
+    case 'hls':
+      // HLS video stream
+      return (
+        <video
+          key={`${camera.id}-${refreshKey}`}
+          className="absolute inset-0 w-full h-full object-cover"
+          controls
+          autoPlay
+          muted
+        >
+          <source src={camera.url} type="application/x-mpegURL" />
+          Din nettleser støtter ikke video-avspilling.
+        </video>
+      );
+
+    case 'image':
+      // Statisk bilde eller snapshot
+      return (
+        <img
+          key={`${camera.id}-${refreshKey}`}
+          src={camera.url}
+          alt={camera.name}
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+      );
+
+    case 'iframe':
+    default:
+      // iframe for web-baserte kamera-interfaces
+      return (
+        <iframe
+          key={`${camera.id}-${refreshKey}`}
+          src={camera.url}
+          className="absolute inset-0 w-full h-full border-0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+        />
+      );
+  }
 }
 
 export default function CameraSection({
@@ -47,9 +116,13 @@ export default function CameraSection({
 }: CameraSectionProps) {
   const { user } = useAuth();
   const [showAddDialog, setShowAddDialog] = useState(false);
-  const [fullscreenCamera, setFullscreenCamera] = useState<Camera | null>(null);
+  const [fullscreenCamera, setFullscreenCamera] = useState<CameraWithType | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
-  const [newCamera, setNewCamera] = useState({ name: "", url: "" });
+  const [newCamera, setNewCamera] = useState({ 
+    name: "", 
+    url: "",
+    streamType: 'iframe' as 'iframe' | 'mjpeg' | 'hls' | 'image'
+  });
   const [loading, setLoading] = useState(false);
 
   const handleAddCamera = async () => {
@@ -60,10 +133,11 @@ export default function CameraSection({
 
     setLoading(true);
     try {
-      const camera: Camera = {
+      const camera: CameraWithType = {
         id: Date.now().toString(),
         name: newCamera.name,
         url: newCamera.url,
+        streamType: newCamera.streamType,
         addedAt: Timestamp.now(),
       };
 
@@ -74,7 +148,7 @@ export default function CameraSection({
       });
 
       toast.success("Kamera lagt til!");
-      setNewCamera({ name: "", url: "" });
+      setNewCamera({ name: "", url: "", streamType: 'iframe' });
       setShowAddDialog(false);
     } catch (error) {
       console.error("Error adding camera:", error);
@@ -154,15 +228,20 @@ export default function CameraSection({
               <Card key={camera.id} className="overflow-hidden">
                 <CardHeader className="p-3">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-sm font-medium">
-                      {camera.name}
-                    </CardTitle>
+                    <div>
+                      <CardTitle className="text-sm font-medium">
+                        {camera.name}
+                      </CardTitle>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {(camera as CameraWithType).streamType || 'iframe'}
+                      </p>
+                    </div>
                     <div className="flex gap-1">
                       <Button
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8"
-                        onClick={() => setFullscreenCamera(camera)}
+                        onClick={() => setFullscreenCamera(camera as CameraWithType)}
                       >
                         <Maximize2 className="h-4 w-4" />
                       </Button>
@@ -179,13 +258,7 @@ export default function CameraSection({
                 </CardHeader>
                 <CardContent className="p-0">
                   <div className="relative aspect-video bg-black">
-                    <iframe
-                      key={`${camera.id}-${refreshKey}`}
-                      src={camera.url}
-                      className="absolute inset-0 w-full h-full"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                    />
+                    <CameraStream camera={camera as CameraWithType} refreshKey={refreshKey} />
                   </div>
                 </CardContent>
               </Card>
@@ -200,7 +273,7 @@ export default function CameraSection({
           <DialogHeader>
             <DialogTitle>Legg til IP-kamera</DialogTitle>
             <DialogDescription>
-              Legg til et kamera ved å oppgi navn og URL til kamerastrømmen.
+              Legg til et kamera ved å oppgi navn, URL og stream-type.
             </DialogDescription>
           </DialogHeader>
 
@@ -218,6 +291,29 @@ export default function CameraSection({
             </div>
 
             <div className="space-y-2">
+              <Label htmlFor="stream-type">Stream-type</Label>
+              <Select
+                value={newCamera.streamType}
+                onValueChange={(value: 'iframe' | 'mjpeg' | 'hls' | 'image') =>
+                  setNewCamera({ ...newCamera, streamType: value })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="iframe">Iframe (Web-interface)</SelectItem>
+                  <SelectItem value="mjpeg">MJPEG Stream</SelectItem>
+                  <SelectItem value="hls">HLS Video Stream</SelectItem>
+                  <SelectItem value="image">Statisk bilde</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Velg riktig type basert på ditt kamera
+              </p>
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor="camera-url">Kamera URL</Label>
               <Input
                 id="camera-url"
@@ -227,9 +323,41 @@ export default function CameraSection({
                   setNewCamera({ ...newCamera, url: e.target.value })
                 }
               />
-              <p className="text-xs text-muted-foreground">
-                Eksempel: http://192.168.1.100:8080/video eller RTSP stream URL
-              </p>
+              {newCamera.streamType === 'iframe' && (
+                <p className="text-xs text-muted-foreground">
+                  Eksempel: http://192.168.1.100:8080
+                </p>
+              )}
+              {newCamera.streamType === 'mjpeg' && (
+                <p className="text-xs text-muted-foreground">
+                  Eksempel: http://192.168.1.100:8080/video.mjpg
+                </p>
+              )}
+              {newCamera.streamType === 'hls' && (
+                <p className="text-xs text-muted-foreground">
+                  Eksempel: http://192.168.1.100:8080/stream.m3u8
+                </p>
+              )}
+              {newCamera.streamType === 'image' && (
+                <p className="text-xs text-muted-foreground">
+                  Eksempel: http://192.168.1.100:8080/snapshot.jpg
+                </p>
+              )}
+            </div>
+
+            <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+              <div className="flex gap-2">
+                <AlertCircle className="h-4 w-4 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+                <div className="text-xs text-blue-900 dark:text-blue-100">
+                  <p className="font-semibold mb-1">Tips:</p>
+                  <ul className="list-disc list-inside space-y-1">
+                    <li>Bruk <strong>iframe</strong> for web-baserte kameraer</li>
+                    <li>Bruk <strong>MJPEG</strong> for de fleste IP-kameraer</li>
+                    <li>Bruk <strong>HLS</strong> for moderne streaming</li>
+                    <li>Bruk <strong>Image</strong> for snapshots</li>
+                  </ul>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -238,7 +366,7 @@ export default function CameraSection({
               variant="outline"
               onClick={() => {
                 setShowAddDialog(false);
-                setNewCamera({ name: "", url: "" });
+                setNewCamera({ name: "", url: "", streamType: 'iframe' });
               }}
             >
               Avbryt
@@ -269,13 +397,7 @@ export default function CameraSection({
               <div className="absolute top-4 left-4 z-10 bg-black/50 px-3 py-2 rounded text-white text-sm font-medium">
                 {fullscreenCamera.name}
               </div>
-              <iframe
-                key={`fullscreen-${fullscreenCamera.id}-${refreshKey}`}
-                src={fullscreenCamera.url}
-                className="w-full h-full"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              />
+              <CameraStream camera={fullscreenCamera} refreshKey={refreshKey} />
             </div>
           </DialogContent>
         </Dialog>
