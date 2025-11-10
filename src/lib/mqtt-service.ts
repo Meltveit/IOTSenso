@@ -1,21 +1,8 @@
-// Filsti: src/lib/mqtt-service.ts
-
+// src/lib/mqtt-service.ts
 import admin from 'firebase-admin';
 import mqtt from 'mqtt';
 import 'dotenv/config';
-
-// Initialize Firebase Admin if not already initialized
-if (!admin.apps.length) {
-  const serviceAccount = JSON.parse(
-    process.env.FIREBASE_SERVICE_ACCOUNT_KEY || '{}'
-  );
-
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
-  });
-}
-
-const db = admin.firestore();
+import { db } from './firebase-admin'; // Import db fra firebase-admin.ts
 
 // MQTT Configuration
 const mqttOptions: mqtt.IClientOptions = {
