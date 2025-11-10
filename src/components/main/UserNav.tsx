@@ -69,13 +69,6 @@ export default function UserNav() {
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => router.push('/settings')}>
-            Innstillinger
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => router.push('/billing')}>
-            Fakturering
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleLogout} className="text-destructive">
             Logg ut
           </DropdownMenuItem>

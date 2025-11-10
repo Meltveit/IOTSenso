@@ -8,7 +8,7 @@ export default function HowItWorksPage() {
       <section className="py-16 md:py-24 bg-secondary/50">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-4xl md:text-6xl font-bold font-headline tracking-tight text-foreground">
-            Slik Fungerer SENSO
+            Slik fungerer SENSO
           </h1>
           <p className="mt-4 max-w-3xl mx-auto text-lg md:text-xl text-muted-foreground">
             Fra sensor til innsikt – se hvordan vår plattform transformerer data til proaktivt vedlikehold.
@@ -19,7 +19,7 @@ export default function HowItWorksPage() {
       <section id="technology" className="py-20">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold font-headline">Teknologien Bak</h2>
+            <h2 className="text-3xl md:text-4xl font-bold font-headline">Teknologien bak</h2>
             <p className="mt-2 text-muted-foreground max-w-2xl mx-auto">En forenklet oversikt over hvordan vi samler inn, behandler og presenterer dataene dine.</p>
           </div>
           <div className="grid md:grid-cols-3 gap-8 text-center">
@@ -35,7 +35,7 @@ export default function HowItWorksPage() {
             />
             <InfoCard
               icon={LayoutDashboard}
-              title="3. Visualisering og Varsling"
+              title="3. Visualisering og varsling"
               description="Du får umiddelbar tilgang til all data gjennom et intuitivt web-dashboard. Se grafer, status og motta prediktive varsler på e-post eller SMS når systemet oppdager avvik som krever din oppmerksomhet."
             />
           </div>
@@ -56,12 +56,12 @@ export default function HowItWorksPage() {
             />
             <StepCard
               icon={HardHat}
-              title="Steg 2: Legg til og Konfigurer Sensorer"
+              title="Steg 2: Legg til og konfigurer sensorer"
               description="Registrer hver sensor i dashboardet. Gi den et navn, angi lokasjon og sett opp dine egne terskelverdier for varsler. Bruk vår AI-assistent for å få anbefalte terskler basert på industristandarder."
             />
             <StepCard
               icon={Bell}
-              title="Steg 3: Motta Sanntidsdata og Varsler"
+              title="Steg 3: Motta sanntidsdata og varsler"
               description="Så snart konfigurasjonen er fullført, vil du se data strømme inn i sanntid. Systemet er nå aktivt og vil varsle deg proaktivt om potensielle problemer. Len deg tilbake og la SENSO holde vakt."
             />
           </div>
@@ -71,7 +71,7 @@ export default function HowItWorksPage() {
       <section id="faq" className="py-20">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-4xl">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold font-headline">Ofte Stilte Spørsmål</h2>
+            <h2 className="text-3xl md:text-4xl font-bold font-headline">Ofte stilte spørsmål</h2>
             <p className="mt-2 text-muted-foreground">Få svar på de vanligste spørsmålene.</p>
           </div>
           <Accordion type="single" collapsible className="w-full">

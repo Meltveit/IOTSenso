@@ -1,6 +1,6 @@
 "use client";
 
-import type { Product } from "@/lib/types";
+import type { SensorProduct } from "@/lib/types";
 import {
   ShieldCheck,
   Zap,
@@ -30,7 +30,7 @@ const IconMapping: { [key: string]: React.ElementType } = {
   "default": CheckCircle
 };
 
-export default function ProductDetailClient({ product }: { product: Product }) {
+export default function ProductDetailClient({ product }: { product: SensorProduct }) {
     const router = useRouter();
   return (
     <div className="bg-secondary/50">

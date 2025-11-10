@@ -15,6 +15,7 @@ import { ArrowRight, Thermometer, Droplets, Weight, Ruler, CircleGauge, Clock, W
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
+import { nb } from 'date-fns/locale';
 
 const ICONS = {
   temperature: Thermometer,
@@ -42,10 +43,10 @@ export default function SensorCard({ sensor }: SensorCardProps) {
   const getStatusText = (status: string) => {
     switch (status) {
       case 'ok': return 'OK';
-      case 'pending': return 'Venter på data';
+      case 'pending': return 'Venter';
       case 'warning': return 'Advarsel';
       case 'critical': return 'Kritisk';
-      case 'offline': return 'Offline';
+      case 'offline': return 'Frakoblet';
       default: return status;
     }
   };
@@ -59,7 +60,7 @@ export default function SensorCard({ sensor }: SensorCardProps) {
       const date = sensor.lastCommunication.toDate ? 
         sensor.lastCommunication.toDate() : 
         new Date(sensor.lastCommunication as any);
-      return formatDistanceToNow(date, { addSuffix: true });
+      return formatDistanceToNow(date, { addSuffix: true, locale: nb });
     } catch (error) {
       return 'Ukjent';
     }
@@ -94,7 +95,7 @@ export default function SensorCard({ sensor }: SensorCardProps) {
           <div className="flex flex-col items-center justify-center py-8 text-center">
             <WifiOff className="h-12 w-12 text-muted-foreground/50 mb-3" />
             <p className="text-sm text-muted-foreground">Ingen kommunikasjon</p>
-            <p className="text-xs text-muted-foreground mt-1">{getLastCommunication()}</p>
+            <p className="text-xs text-muted-foreground mt-1">Sist sett: {getLastCommunication()}</p>
           </div>
         ) : (
           <>
@@ -127,7 +128,7 @@ export default function SensorCard({ sensor }: SensorCardProps) {
                       ? "bg-orange-500/20 text-orange-700" 
                       : "bg-muted text-muted-foreground"
                   )}>
-                    ⚠ {sensor.thresholds.warning}
+                    Advarsel: {sensor.thresholds.warning}
                   </span>
                   <span className={cn(
                     "px-2 py-0.5 rounded",
@@ -135,7 +136,7 @@ export default function SensorCard({ sensor }: SensorCardProps) {
                       ? "bg-red-500/20 text-red-700" 
                       : "bg-muted text-muted-foreground"
                   )}>
-                    🔴 {sensor.thresholds.critical}
+                    Kritisk: {sensor.thresholds.critical}
                   </span>
                 </div>
               </div>

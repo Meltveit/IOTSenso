@@ -6,22 +6,22 @@ export default function ManageProductsPage() {
   const products: Product[] = [
     {
       id: "professional",
-      name: "Professional",
+      name: "Profesjonell",
       type: 'Professional',
-      description: "Our most popular plan. Ideal for growing businesses that need comprehensive monitoring and predictive capabilities.",
+      description: "Vår mest populære plan. Ideell for voksende bedrifter som trenger omfattende overvåking og prediktive funksjoner.",
       price: {
         once: 4999,
         monthly: 499
       },
       specs: [
-        "Includes 10 sensors",
-        "Advanced dashboard with AI insights",
-        "AI-powered predictive maintenance",
-        "API access for integrations",
-        "Priority support",
+        "Inkluderer 10 sensorer",
+        "Avansert dashbord med AI-innsikt",
+        "AI-drevet prediktivt vedlikehold",
+        "API-tilgang for integrasjoner",
+        "Prioritert support",
       ],
       imageUrl: "https://picsum.photos/seed/pro/600/400",
-      imageHint: "professional sensors",
+      imageHint: "profesjonelle sensorer",
       rating: 5,
     },
   ];

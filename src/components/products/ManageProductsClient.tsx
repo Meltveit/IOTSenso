@@ -29,6 +29,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
 
 const ProductCard = ({ product }: { product: Product }) => (
   <Card className="flex flex-col overflow-hidden">
@@ -59,7 +60,7 @@ const ProductCard = ({ product }: { product: Product }) => (
       </ul>
     </CardContent>
     <CardFooter className="flex flex-col items-start p-4 bg-secondary/50 mt-auto">
-       <Button className="w-full">Manage Subscription</Button>
+       <Button className="w-full">Administrer abonnement</Button>
     </CardFooter>
   </Card>
 );
@@ -70,9 +71,9 @@ export default function ManageProductsClient({ products }: { products: Product[]
     <div className="flex flex-col gap-6">
        <Card>
         <CardHeader>
-          <CardTitle className="font-headline">Manage Your Subscription</CardTitle>
+          <CardTitle className="font-headline">Administrer ditt abonnement</CardTitle>
           <CardDescription>
-            View your current plan, add more sensors, or change your subscription.
+            Se din nåværende plan, legg til flere sensorer, eller endre abonnementet ditt.
           </CardDescription>
         </CardHeader>
        </Card>
@@ -85,11 +86,11 @@ export default function ManageProductsClient({ products }: { products: Product[]
       {products.length === 0 && (
         <Card className="text-center py-16 text-muted-foreground">
             <CardContent>
-                <h3 className="font-bold text-lg">No active subscription</h3>
-                <p className="mb-4">You do not have an active subscription yet. Choose a plan to get started.</p>
+                <h3 className="font-bold text-lg">Ingen aktivt abonnement</h3>
+                <p className="mb-4">Du har ikke et aktivt abonnement enda. Velg en plan for å komme i gang.</p>
                 <Button>
                     <PlusCircle className="mr-2 h-4 w-4" />
-                    View Plans
+                    Se planer
                 </Button>
             </CardContent>
         </Card>

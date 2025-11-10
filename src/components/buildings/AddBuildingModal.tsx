@@ -117,7 +117,7 @@ export default function AddBuildingModal({
         <DialogHeader>
           <DialogTitle>Legg til ny bygning</DialogTitle>
           <DialogDescription>
-            Opprett en bygning for å gruppere sensorer
+            Fyll ut detaljene under for å opprette en ny bygning. Dette hjelper deg med å organisere sensorene dine.
           </DialogDescription>
         </DialogHeader>
 
@@ -175,7 +175,7 @@ export default function AddBuildingModal({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="city">Sted</Label>
+              <Label htmlFor="city">Poststed</Label>
               <Input
                 id="city"
                 placeholder="F.eks. Oslo"

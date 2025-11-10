@@ -19,18 +19,18 @@ export default function PublicLayout({
                     </span>
                 </Link>
                 <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
-                    <Link href="/home" className="text-muted-foreground hover:text-foreground transition-colors">Home</Link>
-                    <Link href="/products" className="text-foreground font-semibold hover:text-foreground/80 transition-colors">Plans</Link>
-                    <Link href="/about-us" className="text-muted-foreground hover:text-foreground transition-colors">About Us</Link>
-                    <Link href="/how-it-works" className="text-muted-foreground hover:text-foreground transition-colors">How It Works</Link>
+                    <Link href="/home" className="text-muted-foreground hover:text-foreground transition-colors">Hjem</Link>
+                    <Link href="/products" className="text-foreground font-semibold hover:text-foreground/80 transition-colors">Prisplaner</Link>
+                    <Link href="/about-us" className="text-muted-foreground hover:text-foreground transition-colors">Om oss</Link>
+                    <Link href="/how-it-works" className="text-muted-foreground hover:text-foreground transition-colors">Slik fungerer det</Link>
                 </nav>
                 <div className="flex items-center gap-2">
                     <div className="hidden md:flex items-center gap-2">
                         <Button variant="ghost" asChild>
-                        <Link href="/login">Login</Link>
+                        <Link href="/login">Logg inn</Link>
                         </Button>
                         <Button asChild>
-                        <Link href="/signup">Get Started Here</Link>
+                        <Link href="/signup">Kom i gang</Link>
                         </Button>
                     </div>
                     <div className="md:hidden">
@@ -54,34 +54,30 @@ export default function PublicLayout({
                                     SENSO
                                 </span>
                             </Link>
-                            <p className="text-sm text-muted-foreground mt-4">Proactive sensor monitoring to protect your assets.</p>
+                            <p className="text-sm text-muted-foreground mt-4">Proaktiv sensorovervåkning for å beskytte dine verdier.</p>
                         </div>
                         <div>
-                            <h4 className="font-headline font-semibold">Product</h4>
+                            <h4 className="font-headline font-semibold">Produkt</h4>
                             <ul className="mt-4 space-y-2 text-sm">
-                                <li><Link href="#features" className="text-muted-foreground hover:text-foreground">Features</Link></li>
-                                <li><Link href="/how-it-works" className="text-muted-foreground hover:text-foreground">How it Works</Link></li>
+                                <li><Link href="#features" className="text-muted-foreground hover:text-foreground">Funksjoner</Link></li>
+                                <li><Link href="/how-it-works" className="text-muted-foreground hover:text-foreground">Slik fungerer det</Link></li>
                                 <li><Link href="/dashboard" className="text-muted-foreground hover:text-foreground">Demo</Link></li>
                             </ul>
                         </div>
                         <div>
-                            <h4 className="font-headline font-semibold">Company</h4>
+                            <h4 className="font-headline font-semibold">Selskap</h4>
                             <ul className="mt-4 space-y-2 text-sm">
-                                <li><Link href="/about-us" className="text-muted-foreground hover:text-foreground">About Us</Link></li>
-                                <li><Link href="/contact" className="text-muted-foreground hover:text-foreground">Contact</Link></li>
-                                <li><Link href="/blog" className="text-muted-foreground hover:text-foreground">Blog</Link></li>
+                                <li><Link href="/about-us" className="text-muted-foreground hover:text-foreground">Om oss</Link></li>
                             </ul>
                         </div>
                         <div>
-                            <h4 className="font-headline font-semibold">Legal</h4>
+                            <h4 className="font-headline font-semibold">Juridisk</h4>
                             <ul className="mt-4 space-y-2 text-sm">
-                                <li><Link href="/privacy" className="text-muted-foreground hover:text-foreground">Privacy Policy</Link></li>
-                                <li><Link href="/terms" className="text-muted-foreground hover:text-foreground">Terms of Service</Link></li>
                             </ul>
                         </div>
                     </div>
                     <div className="mt-8 border-t pt-6 text-center text-sm text-muted-foreground">
-                        <p>&copy; {new Date().getFullYear()} SENSO. All rights reserved.</p>
+                        <p>&copy; {new Date().getFullYear()} SENSO. Alle rettigheter forbeholdt.</p>
                     </div>
                 </div>
             </footer>

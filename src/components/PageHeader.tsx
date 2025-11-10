@@ -33,7 +33,7 @@ export default function PageHeader() {
     };
   });
 
-  const pageTitle = breadcrumbs.length > 0 ? breadcrumbs[breadcrumbs.length - 1].label : "Dashboard";
+  const pageTitle = breadcrumbs.length > 0 ? breadcrumbs[breadcrumbs.length - 1].label : "Dashbord";
 
   return (
     <div>
@@ -42,7 +42,7 @@ export default function PageHeader() {
             <BreadcrumbList>
                  <BreadcrumbItem>
                     <BreadcrumbLink asChild>
-                        <Link href="/dashboard">Home</Link>
+                        <Link href="/dashboard">Hjem</Link>
                     </BreadcrumbLink>
                 </BreadcrumbItem>
                 {breadcrumbs.length > 0 && <BreadcrumbSeparator />}

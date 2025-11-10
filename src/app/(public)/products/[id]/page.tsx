@@ -1,21 +1,21 @@
 import { notFound } from "next/navigation";
-import type { Product } from "@/lib/types";
+import type { SensorProduct } from "@/lib/types"; // Endret fra Product til SensorProduct
 import ProductDetailClient from "@/components/products/ProductDetailClient";
 
-const products: Product[] = [
+const products: SensorProduct[] = [
     {
       id: "snowguard-pro",
-      name: "SnowGuard Pro",
+      name: "Snøvakt Pro",
       subtitle: "Vektsensor for Snølast",
       type: 'weight',
-      description: "SnowGuard Pro er en avansert vektsensor som måler snølasten på tak i sanntid. Sensoren varsler deg før snømengden blir kritisk, slik at du kan rydde taket før det oppstår skader.",
+      description: "Snøvakt Pro er en avansert vektsensor som måler snølasten på tak i sanntid. Sensoren varsler deg før snømengden blir kritisk, slik at du kan rydde taket før det oppstår skader.",
       purpose: [
         "Forebygge takras og takkollaps",
         "Beskytte mot strukturelle skader på bygninger",
         "Redusere risiko for personskader",
         "Spare kostnader på dyre takskader",
       ],
-      howItWorks: "SnowGuard Pro bruker presisjonsvektceller som måler den faktiske belastningen på takstrukturen. Sensoren kalibreres ved installasjon basert på takets størrelse og bæreevne. Når snølasten når 60% av maksimal kapasitet, sendes en advarsel. Ved 80% sendes kritisk varsel.",
+      howItWorks: "Snøvakt Pro bruker presisjonsvektceller som måler den faktiske belastningen på takstrukturen. Sensoren kalibreres ved installasjon basert på takets størrelse og bæreevne. Når snølasten når 60% av maksimal kapasitet, sendes en advarsel. Ved 80% sendes kritisk varsel.",
       specs: {
         "Måleområde": "0-200 kg",
         "Nøyaktighet": "±0.5 kg",
@@ -59,17 +59,17 @@ const products: Product[] = [
     },
     {
       id: "snowlevel-ir",
-      name: "SnowLevel IR",
+      name: "Snønivå IR",
       subtitle: "Infrarød Avstandssensor",
       type: 'ir',
-      description: "SnowLevel IR bruker avansert infrarød teknologi for å måle snødybden på taket ditt. Sensoren gir deg eksakt oversikt over hvor mye snø som har samlet seg, og varsler når det er tid for rydding.",
+      description: "Snønivå IR bruker avansert infrarød teknologi for å måle snødybden på taket ditt. Sensoren gir deg eksakt oversikt over hvor mye snø som har samlet seg, og varsler når det er tid for rydding.",
       purpose: [
           "Måle snødybde med høy presisjon",
           "Overvåke snøakkumulering over tid",
           "Varsle ved kritiske snømengder",
           "Dokumentere snøforhold for forsikringsformål"
       ],
-      howItWorks: "SnowLevel IR sender ut infrarøde laserpulser som måler avstanden til snøoverflaten. Ved å kjenne takets høyde kan sensoren beregne eksakt snødybde. Sensoren kompenserer automatisk for temperatur og luftfuktighet for maksimal nøyaktighet.",
+      howItWorks: "Snønivå IR sender ut infrarøde laserpulser som måler avstanden til snøoverflaten. Ved å kjenne takets høyde kan sensoren beregne eksakt snødybde. Sensoren kompenserer automatisk for temperatur og luftfuktighet for maksimal nøyaktighet.",
       specs: {
           "Måleområde": "0-300 cm",
           "Nøyaktighet": "±1 cm",
@@ -117,10 +117,10 @@ const products: Product[] = [
     },
     {
       id: "basementwatch",
-      name: "BasementWatch",
+      name: "Kjellervakten",
       subtitle: "Fuktsensor for Kjeller og Våtrom",
       type: 'moisture',
-      description: "BasementWatch er en intelligent fuktsensor som overvåker fuktighetsnivået i kjellere, våtrom og andre utsatte områder. Sensoren varsler tidlig om fuktproblemer, slik at du kan handle før det utvikler seg mugg og råte.",
+      description: "Kjellervakten er en intelligent fuktsensor som overvåker fuktighetsnivået i kjellere, våtrom og andre utsatte områder. Sensoren varsler tidlig om fuktproblemer, slik at du kan handle før det utvikler seg mugg og råte.",
       purpose: [
           "Oppdage fuktlekkasjer tidlig",
           "Forebygge mugg og råteskader",
@@ -128,7 +128,7 @@ const products: Product[] = [
           "Overvåke tørkeforløp etter vannskader",
           "Sikre sunt inneklima"
       ],
-      howItWorks: "BasementWatch bruker høypresisjonssensorer som måler både relativ luftfuktighet (RH%) og temperatur. Sensoren beregner duggpunkt og varsler når forholdene er gunstige for muggvekst. Ved plutselig økning i fuktighet sendes umiddelbar alarm.",
+      howItWorks: "Kjellervakten bruker høypresisjonssensorer som måler både relativ luftfuktighet (RH%) og temperatur. Sensoren beregner duggpunkt og varsler når forholdene er gunstige for muggvekst. Ved plutselig økning i fuktighet sendes umiddelbar alarm.",
       specs: {
           "Måleområde": "0-100% RH (relativ luftfuktighet)",
           "Nøyaktighet": "±2% RH",
@@ -178,10 +178,10 @@ const products: Product[] = [
     },
     {
       id: "gutterflow",
-      name: "GutterFlow",
+      name: "Rennevakten",
       subtitle: "Takrennesensor for Vannstrøm",
       type: 'flow',
-      description: "GutterFlow overvåker vannstrømmen i takrennene dine og varsler når det oppstår tetting eller overbelastning. Sensoren sikrer at regnvann ledes trygt bort fra bygningen, og forhindrer vannskader på fasade, grunnmur og fundament.",
+      description: "Rennevakten overvåker vannstrømmen i takrennene dine og varsler når det oppstår tetting eller overbelastning. Sensoren sikrer at regnvann ledes trygt bort fra bygningen, og forhindrer vannskader på fasade, grunnmur og fundament.",
       purpose: [
           "Oppdage tette takrenner og nedløpsrør",
           "Forebygge vannskader på fasade",
@@ -189,7 +189,7 @@ const products: Product[] = [
           "Varsle om ispropper om vinteren",
           "Sikre drenering fungerer året rundt"
       ],
-      howItWorks: "GutterFlow måler vannstrømmen gjennom takrennen ved hjelp av en ikke-invasiv flomsensor. Sensoren lærer det normale strømningsmønsteret for din eiendom, og varsler når vannstrømmen avviker fra normalen - enten pga. tetting, overløp eller ispropper.",
+      howItWorks: "Rennevakten måler vannstrømmen gjennom takrennen ved hjelp av en ikke-invasiv flomsensor. Sensoren lærer det normale strømningsmønsteret for din eiendom, og varsler når vannstrømmen avviker fra normalen - enten pga. tetting, overløp eller ispropper.",
       specs: {
           "Måleområde": "0-100 liter/minutt",
           "Nøyaktighet": "±5% av måleverdi",

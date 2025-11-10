@@ -38,7 +38,7 @@ export default function AboutUsPage() {
       <section className="py-16 bg-secondary/50">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 grid md:grid-cols-2 gap-12 items-center">
           <div>
-            <h2 className="text-3xl font-bold font-headline mb-4">Vår Historie</h2>
+            <h2 className="text-3xl font-bold font-headline mb-4">Vår historie</h2>
             <p className="text-muted-foreground mb-4">
               SENSO ble grunnlagt i 2023 med en enkel, men kraftfull idé: å forutsi maskinfeil før de skjer. Frustrert over de høye kostnadene og den operasjonelle hodepinen forårsaket av uventet nedetid, bestemte våre grunnleggere seg for å bygge en løsning som gir bedrifter verktøyene til å være proaktive, ikke reaktive.
             </p>
@@ -51,7 +51,7 @@ export default function AboutUsPage() {
               <CardHeader className="flex-row items-center gap-4">
                 <Goal className="h-10 w-10 text-primary" />
                 <div>
-                  <CardTitle className="font-headline">Vår Misjon</CardTitle>
+                  <CardTitle className="font-headline">Vår misjon</CardTitle>
                   <p className="text-sm text-muted-foreground">
                     Å gi enhver industribedrift muligheten til å oppnå null uplanlagt nedetid gjennom intelligent, tilgjengelig og brukervennlig prediktivt vedlikehold.
                   </p>
@@ -62,7 +62,7 @@ export default function AboutUsPage() {
                     <CardHeader className="flex-row items-center gap-4">
                         <Building className="h-10 w-10 text-primary" />
                         <div>
-                        <CardTitle className="font-headline">Vår Visjon</CardTitle>
+                        <CardTitle className="font-headline">Vår visjon</CardTitle>
                         <p className="text-sm text-muted-foreground">
                             En fremtid der alle industrielle maskiner er smarte, selvhelbredende og fullstendig pålitelige, noe som driver en mer effektiv og bærekraftig global produksjon.
                         </p>
@@ -78,7 +78,7 @@ export default function AboutUsPage() {
        <section className="py-20">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
               <div className="text-center mb-12">
-                  <h2 className="text-3xl md:text-4xl font-bold font-headline">Møt Teamet</h2>
+                  <h2 className="text-3xl md:text-4xl font-bold font-headline">Møt teamet</h2>
                   <p className="mt-2 text-muted-foreground">De dedikerte personene bak SENSO.</p>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
@@ -109,7 +109,7 @@ export default function AboutUsPage() {
       <section id="contact" className="py-20 bg-secondary/50">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold font-headline">Kontakt Oss</h2>
+            <h2 className="text-3xl md:text-4xl font-bold font-headline">Kontakt oss</h2>
             <p className="mt-2 text-muted-foreground">Vi vil gjerne høre fra deg! Ta kontakt for en uforpliktende prat.</p>
           </div>
           <div className="max-w-4xl mx-auto grid md:grid-cols-3 gap-8 text-center">

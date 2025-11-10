@@ -70,7 +70,7 @@ export default function BuildingsPage() {
     <div className="container mx-auto p-6">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold font-headline">Mine bygninger</h1>
+          <h1 className="text-3xl font-bold font-headline">Dine bygninger</h1>
           <p className="text-muted-foreground mt-1">
             Administrer og overvåk sensorer gruppert per bygning
           </p>
@@ -85,7 +85,7 @@ export default function BuildingsPage() {
         <div className="text-center py-16 border-2 border-dashed rounded-lg">
           <h3 className="text-xl font-semibold mb-2">Ingen bygninger ennå</h3>
           <p className="text-muted-foreground mb-4">
-            Opprett din første bygning for å gruppere sensorer
+            Kom i gang ved å opprette din første bygning
           </p>
           <Button onClick={() => setShowAddModal(true)}>
             <Plus className="mr-2 h-4 w-4" />

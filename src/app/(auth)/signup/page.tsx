@@ -50,28 +50,28 @@ export default function SignupPage() {
 
   const validateForm = (): boolean => {
     if (!formData.email || !formData.password || !formData.phone) {
-      setError('Vennligst fyll ut alle obligatoriske felt');
+      setError('Vennligst fyll ut alle obligatoriske felt (*).');
       return false;
     }
 
     if (formData.password !== formData.confirmPassword) {
-      setError('Passordene matcher ikke');
+      setError('Passordene er ikke like.');
       return false;
     }
 
     if (formData.password.length < 6) {
-      setError('Passordet må være minst 6 tegn');
+      setError('Passordet må bestå av minst 6 tegn.');
       return false;
     }
 
     if (!formData.acceptTerms) {
-      setError('Du må akseptere vilkårene');
+      setError('Du må godta vilkårene for å fortsette.');
       return false;
     }
 
     if (accountType === 'private') {
       if (!formData.firstName || !formData.lastName) {
-        setError('Vennligst fyll ut fornavn og etternavn');
+        setError('Vennligst fyll ut fornavn og etternavn.');
         return false;
       }
     } else {
@@ -80,16 +80,16 @@ export default function SignupPage() {
         !formData.organizationNumber ||
         !formData.contactPersonFirstName ||
         !formData.contactPersonLastName ||
-        !formData.billingAddressStreet ||
-        !formData.billingAddressPostalCode ||
-        !formData.billingAddressCity
+        !formData.billingStreet ||
+        !formData.billingPostalCode ||
+        !formData.billingCity
       ) {
-        setError('Vennligst fyll ut alle obligatoriske felt for bedrift');
+        setError('Vennligst fyll ut alle obligatoriske felt for bedrifter (*).');
         return false;
       }
 
       if (formData.organizationNumber && !/^\d{9}$/.test(formData.organizationNumber)) {
-        setError('Organisasjonsnummer må være 9 siffer');
+        setError('Organisasjonsnummer må bestå av 9 siffer.');
         return false;
       }
     }
@@ -133,9 +133,9 @@ export default function SignupPage() {
             title: formData.contactPersonTitle,
           },
           billingAddress: {
-            street: formData.billingAddressStreet!,
-            postalCode: formData.billingAddressPostalCode!,
-            city: formData.billingAddressCity!,
+            street: formData.billingStreet!,
+            postalCode: formData.billingPostalCode!,
+            city: formData.billingCity!,
           },
           invoiceEmail: formData.invoiceEmail,
           numberOfSensors: formData.numberOfSensors,
@@ -148,11 +148,11 @@ export default function SignupPage() {
       router.push('/dashboard');
     } catch (err: any) {
       console.error('Signup error:', err);
-      let errorMessage = 'En feil oppstod ved registrering. Prøv igjen.';
+      let errorMessage = 'Noe gikk galt under registreringen. Vennligst prøv igjen.';
       if (err.code === 'auth/email-already-in-use') {
-        errorMessage = 'E-postadressen er allerede i bruk';
+        errorMessage = 'En konto med denne e-postadressen finnes allerede.';
       } else if (err.code === 'auth/weak-password') {
-        errorMessage = 'Passordet er for svakt';
+        errorMessage = 'Passordet er for svakt. Bruk minst 6 tegn.';
       }
       setError(errorMessage);
       toast({
@@ -171,9 +171,9 @@ export default function SignupPage() {
         <div className="flex justify-center mb-4">
           <SensoLogo className="h-12 w-12 text-primary" />
         </div>
-        <CardTitle className="font-headline text-2xl">Opprett konto</CardTitle>
+        <CardTitle className="font-headline text-2xl">Opprett en ny konto</CardTitle>
         <CardDescription>
-          Velg kontotype og fyll ut informasjonen under
+          Velg kontotype og fyll ut informasjonen nedenfor.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -187,7 +187,7 @@ export default function SignupPage() {
           className="w-full"
         >
           <TabsList className="grid w-full grid-cols-2 mb-6">
-            <TabsTrigger value="private">Privatperson</TabsTrigger>
+            <TabsTrigger value="private">Privat</TabsTrigger>
             <TabsTrigger value="business">Bedrift</TabsTrigger>
           </TabsList>
 
@@ -229,14 +229,14 @@ export default function SignupPage() {
                   type="text"
                   inputMode="numeric"
                   pattern="[0-9]{9}"
-                  placeholder="9 siffer"
+                  placeholder="9-sifret nummer"
                   value={formData.organizationNumber || ''}
                   onChange={handleChange}
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="contactPersonFirstName">Kontaktperson fornavn *</Label>
+                  <Label htmlFor="contactPersonFirstName">Kontaktperson: Fornavn *</Label>
                   <Input
                     id="contactPersonFirstName"
                     value={formData.contactPersonFirstName || ''}
@@ -244,7 +244,7 @@ export default function SignupPage() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="contactPersonLastName">Kontaktperson etternavn *</Label>
+                  <Label htmlFor="contactPersonLastName">Kontaktperson: Etternavn *</Label>
                   <Input
                     id="contactPersonLastName"
                     value={formData.contactPersonLastName || ''}
@@ -253,7 +253,7 @@ export default function SignupPage() {
                 </div>
               </div>
               <div>
-                <Label htmlFor="contactPersonTitle">Stillingstittel</Label>
+                <Label htmlFor="contactPersonTitle">Stilling/tittel</Label>
                 <Input
                   id="contactPersonTitle"
                   value={formData.contactPersonTitle || ''}
@@ -261,35 +261,35 @@ export default function SignupPage() {
                 />
               </div>
               <div>
-                <Label htmlFor="billingAddressStreet">Faktureringsadresse (gate) *</Label>
+                <Label htmlFor="billingStreet">Fakturaadresse *</Label>
                 <Input
-                  id="billingAddressStreet"
-                  value={formData.billingAddressStreet || ''}
+                  id="billingStreet"
+                  value={formData.billingStreet || ''}
                   onChange={handleChange}
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="billingAddressPostalCode">Postnummer *</Label>
+                  <Label htmlFor="billingPostalCode">Postnummer *</Label>
                   <Input
-                    id="billingAddressPostalCode"
+                    id="billingPostalCode"
                     type="text"
                     inputMode="numeric"
-                    value={formData.billingAddressPostalCode || ''}
+                    value={formData.billingPostalCode || ''}
                     onChange={handleChange}
                   />
                 </div>
                 <div>
-                  <Label htmlFor="billingAddressCity">Poststed *</Label>
+                  <Label htmlFor="billingCity">Poststed *</Label>
                   <Input
-                    id="billingAddressCity"
-                    value={formData.billingAddressCity || ''}
+                    id="billingCity"
+                    value={formData.billingCity || ''}
                     onChange={handleChange}
                   />
                 </div>
               </div>
               <div>
-                <Label htmlFor="invoiceEmail">Faktura e-post (hvis annen enn hovedepost)</Label>
+                <Label htmlFor="invoiceEmail">Faktura-e-post (om annen)</Label>
                 <Input
                   id="invoiceEmail"
                   type="email"
@@ -299,7 +299,7 @@ export default function SignupPage() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="numberOfSensors">Estimert antall sensorer</Label>
+                  <Label htmlFor="numberOfSensors">Antall sensorer (estimat)</Label>
                   <Input
                     id="numberOfSensors"
                     type="number"
@@ -310,7 +310,7 @@ export default function SignupPage() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="department">Avdeling</Label>
+                  <Label htmlFor="department">Avdeling/prosjekt</Label>
                   <Input
                     id="department"
                     value={formData.department || ''}
@@ -319,9 +319,10 @@ export default function SignupPage() {
                 </div>
               </div>
               <div>
-                <Label htmlFor="referenceNumber">Referansenummer (for fakturering)</Label>
+                <Label htmlFor="referenceNumber">Referanse/PO-nummer</Label>
                 <Input
                   id="referenceNumber"
+                  placeholder="For fakturering"
                   value={formData.referenceNumber || ''}
                   onChange={handleChange}
                 />
@@ -360,7 +361,7 @@ export default function SignupPage() {
                 required
               />
               <p className="text-xs text-muted-foreground mt-1">
-                Minst 6 tegn
+                Må bestå av minst 6 tegn.
               </p>
             </div>
             <div>
@@ -374,7 +375,7 @@ export default function SignupPage() {
               />
             </div>
 
-            <div className="flex items-center space-x-2 pt-2">
+            <div className="flex items-start space-x-2 pt-2">
               <Checkbox
                 id="acceptTerms"
                 checked={formData.acceptTerms}
@@ -386,14 +387,15 @@ export default function SignupPage() {
                 htmlFor="acceptTerms"
                 className="text-sm font-normal leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
               >
-                Jeg aksepterer{' '}
+                Jeg godtar SENSO sine{' '}
                 <Link href="/terms" className="underline hover:text-primary">
-                  vilkårene
+                  brukervilkår
                 </Link>{' '}
                 og{' '}
                 <Link href="/privacy" className="underline hover:text-primary">
-                  personvernserklæringen
+                  personvernerklæring
                 </Link>
+                .
               </Label>
             </div>
 
@@ -405,7 +407,7 @@ export default function SignupPage() {
 
             <Button type="submit" className="w-full !mt-6" disabled={loading}>
               {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null}
-              {loading ? 'Oppretter konto...' : 'Opprett konto'}
+              {loading ? 'Oppretter konto...' : 'Fullfør registrering'}
             </Button>
           </form>
         </Tabs>
@@ -414,7 +416,7 @@ export default function SignupPage() {
         <div className="text-center text-sm">
           Har du allerede en konto?{' '}
           <Link href="/login" className="underline">
-            Logg inn
+            Logg inn her
           </Link>
         </div>
       </CardFooter>

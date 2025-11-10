@@ -43,7 +43,7 @@ function getBuildingStatus(sensors: Sensor[]): { variant: "default" | "destructi
     return { variant: 'secondary', text: 'Advarsel' };
   }
   if (sensors.some(s => s.status === 'offline')) {
-    return { variant: 'secondary', text: 'Offline' };
+    return { variant: 'secondary', text: 'Frakoblet' };
   }
   return { variant: 'default', text: 'Normal' };
 }
@@ -87,7 +87,7 @@ export default function BuildingCard({ building, sensors }: BuildingCardProps) {
           <div className="flex flex-col items-center p-3 bg-green-500/10 rounded-lg">
             <CheckCircle className="h-5 w-5 text-green-500 mb-1" />
             <span className="text-2xl font-bold">{activeCount}</span>
-            <span className="text-xs text-muted-foreground">OK</span>
+            <span className="text-xs text-muted-foreground">Aktive</span>
           </div>
           
           <div className="flex flex-col items-center p-3 bg-yellow-500/10 rounded-lg">
@@ -105,7 +105,7 @@ export default function BuildingCard({ building, sensors }: BuildingCardProps) {
           <div className="flex flex-col items-center p-3 bg-gray-500/10 rounded-lg">
             <WifiOff className="h-5 w-5 text-gray-500 mb-1" />
             <span className="text-2xl font-bold">{offlineCount}</span>
-            <span className="text-xs text-muted-foreground">Offline</span>
+            <span className="text-xs text-muted-foreground">Frakoblet</span>
           </div>
         </div>
 

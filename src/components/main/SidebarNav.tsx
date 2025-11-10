@@ -23,7 +23,7 @@ import {
 import { SensoLogo } from "../icons";
 
 const navItems = [
-  { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
+  { href: "/dashboard", icon: LayoutDashboard, label: "Dashbord" },
   { href: "/buildings", icon: Building, label: "Bygninger" },
   { href: "/sensors", icon: Thermometer, label: "Sensorer" },
   { href: "/alerts", icon: Bell, label: "Alarmer" },
@@ -69,17 +69,17 @@ export default function SidebarNav() {
         <SidebarMenu>
             <SidebarMenuItem>
               <Link href="/settings">
-                <SidebarMenuButton tooltip="Settings" className="justify-start">
+                <SidebarMenuButton tooltip="Innstillinger" className="justify-start">
                     <Settings className="h-5 w-5" />
-                    <span className="group-data-[collapsible=icon]:hidden">Settings</span>
+                    <span className="group-data-[collapsible=icon]:hidden">Innstillinger</span>
                 </SidebarMenuButton>
               </Link>
             </SidebarMenuItem>
              <SidebarMenuItem>
               <Link href="/help">
-                <SidebarMenuButton tooltip="Help" className="justify-start">
+                <SidebarMenuButton tooltip="Hjelp" className="justify-start">
                     <HelpCircle className="h-5 w-5" />
-                    <span className="group-data-[collapsible=icon]:hidden">Help</span>
+                    <span className="group-data-[collapsible=icon]:hidden">Hjelp</span>
                 </SidebarMenuButton>
               </Link>
             </SidebarMenuItem>

@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow } from "date-fns";
+import { nb } from 'date-fns/locale';
 import type { Sensor, Alert } from "@/lib/types";
 import { collection, query, onSnapshot, orderBy, limit } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -129,6 +130,15 @@ export default function DashboardPage() {
     }
   };
 
+  const translateAlertType = (type: Alert['type']) => {
+    switch (type) {
+      case 'critical': return 'Kritisk';
+      case 'warning': return 'Advarsel';
+      case 'battery': return 'Batteri';
+      default: return type;
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-96 gap-4">
@@ -141,7 +151,7 @@ export default function DashboardPage() {
   if (!user) {
     return (
       <div className="flex items-center justify-center h-96">
-        <p className="text-muted-foreground">Vennligst logg inn for å se dashboard</p>
+        <p className="text-muted-foreground">Vennligst logg inn for å se dashbordet.</p>
       </div>
     );
   }
@@ -151,7 +161,7 @@ export default function DashboardPage() {
       {/* Stats Grid - Responsive: 1 col on mobile, 2 on tablet, 4 on desktop */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard 
-          title="Totalt sensorer" 
+          title="Totalt antall sensorer" 
           value={totalSensors} 
           icon={Zap} 
         />
@@ -159,7 +169,7 @@ export default function DashboardPage() {
           title="Sensorer online" 
           value={onlineSensors} 
           icon={ShieldCheck} 
-          description={totalSensors > 0 ? `${Math.round((onlineSensors / totalSensors) * 100)}% uptime` : 'N/A'} 
+          description={totalSensors > 0 ? `${Math.round((onlineSensors / totalSensors) * 100)}% oppetid` : 'Ingen sensorer'} 
         />
         <StatCard 
           title="Kritiske varsler" 
@@ -171,7 +181,7 @@ export default function DashboardPage() {
           title="Gj.snitt temp" 
           value={`${avgTemp}°C`} 
           icon={Thermometer} 
-          description="På tvers av temp-sensorer" 
+          description="Fra temperatursensorer" 
         />
       </div>
 
@@ -189,7 +199,7 @@ export default function DashboardPage() {
             <Card className="flex items-center justify-center h-64">
               <CardContent className="text-center text-muted-foreground p-6">
                 <p className="font-semibold">Ingen sensorer funnet.</p>
-                <p className="text-sm">Legg til en sensor for å begynne overvåking.</p>
+                <p className="text-sm">Legg til din første sensor for å komme i gang.</p>
               </CardContent>
             </Card>
           )}
@@ -218,14 +228,14 @@ export default function DashboardPage() {
                         className="flex items-start gap-3 p-3 rounded-lg border bg-card hover:bg-accent/5 transition-colors"
                       >
                         <Badge variant={getAlertBadgeVariant(alert.type)} className="mt-0.5">
-                          {alert.type}
+                          {translateAlertType(alert.type)}
                         </Badge>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium leading-none mb-1">
                             {alert.message}
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            {formatDistanceToNow(alertDate, { addSuffix: true })}
+                            {formatDistanceToNow(alertDate, { addSuffix: true, locale: nb })}
                           </p>
                         </div>
                       </div>

@@ -162,7 +162,32 @@ export interface AvailableSensor {
 }
 
 // ============================================
-// PRODUCT TYPES
+// SENSOR PRODUCT TYPES (for public product pages)
+// ============================================
+export interface SensorProduct {
+  id: string;
+  name: string;
+  subtitle: string;
+  type: SensorType;
+  description: string;
+  purpose: string[];
+  howItWorks: string;
+  specs: Record<string, string>;
+  useCases: string[];
+  importantFor: string[];
+  costSavings: Record<string, string>;
+repaymentTime: string;
+  uniqueBenefits: string[];
+  price: number;
+  monthlyFee: number;
+  imageUrl?: string;
+  imageHint?: string;
+  inStock: boolean;
+  rating: number;
+}
+
+// ============================================
+// PRODUCT TYPES (Subscription Plans)
 // ============================================
 
 export interface Product {
@@ -224,6 +249,6 @@ export interface SignupFormData {
   invoiceEmail?: string;
   numberOfSensors?: number;
   department?: string;
-  referenceNumber?: string;
+referenceNumber?: string;
   vatNumber?: string;
 }
