@@ -15,6 +15,9 @@ export interface BaseUser {
   phone: string;
   createdAt: Timestamp;
   subscriptionStatus: 'active' | 'inactive';
+  stripeCustomerId?: string;      // ID for kunden i Stripe (gjelder alle)
+  stripeSubscriptionId?: string;  // ID for aktivt abonnement i Stripe (gjelder alle)
+  numberOfSensors?: number;       // Antall sensorer (gjelder alle)
 }
 
 export interface PrivateUser extends BaseUser {
@@ -43,7 +46,6 @@ export interface BusinessUser extends BaseUser {
     city: string;
   };
   invoiceEmail?: string;
-  numberOfSensors?: number;
   department?: string;
   referenceNumber?: string;
   vatNumber?: string;
@@ -176,7 +178,7 @@ export interface SensorProduct {
   useCases: string[];
   importantFor: string[];
   costSavings: Record<string, string>;
-repaymentTime: string;
+  repaymentTime: string;
   uniqueBenefits: string[];
   price: number;
   monthlyFee: number;
@@ -249,6 +251,6 @@ export interface SignupFormData {
   invoiceEmail?: string;
   numberOfSensors?: number;
   department?: string;
-referenceNumber?: string;
+  referenceNumber?: string;
   vatNumber?: string;
 }

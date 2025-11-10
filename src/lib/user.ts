@@ -1,4 +1,4 @@
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, PartialWithFieldValue } from 'firebase/firestore';
 import { db } from './firebase';
 import type { User } from './types';
 
@@ -12,9 +12,19 @@ export async function getUserProfile(uid: string): Promise<User | null> {
   const userDoc = await getDoc(userDocRef);
 
   if (userDoc.exists()) {
-    // Returner dataene, castet til vår User-type fra types.ts
     return userDoc.data() as User;
   }
   
   return null;
+}
+
+/**
+ * Oppdaterer en brukerprofil i Firestore.
+ * @param {string} uid - Brukerens unike ID.
+ * @param {Partial<User>} data - Et objekt som inneholder feltene som skal oppdateres.
+ * @returns {Promise<void>} Et løfte som resolver når oppdateringen er fullført.
+ */
+export async function updateUserProfile(uid: string, data: PartialWithFieldValue<User>): Promise<void> {
+  const userDocRef = doc(db, 'users', uid);
+  return await updateDoc(userDocRef, data);
 }
