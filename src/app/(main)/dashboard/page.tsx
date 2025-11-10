@@ -134,7 +134,6 @@ export default function DashboardPage() {
       <div className="flex flex-col items-center justify-center h-96 gap-4">
         <Loader2 className="h-8 w-8 animate-spin" />
         <p className="text-muted-foreground">Laster sensorer...</p>
-        <p className="text-xs text-muted-foreground">(Sjekk konsollen for debug info)</p>
       </div>
     );
   }
@@ -148,16 +147,9 @@ export default function DashboardPage() {
   }
   
   return (
-    <div className="flex flex-col gap-6">
-      {/* Debug info */}
-      <div className="bg-muted p-4 rounded-lg text-xs font-mono">
-        <p>🔍 Debug Info:</p>
-        <p>User ID: {user.uid}</p>
-        <p>Sensors loaded: {totalSensors}</p>
-        <p>Collection path: users/{user.uid}/sensors</p>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <div className="w-full h-full space-y-6">
+      {/* Stats Grid - Responsive: 1 col on mobile, 2 on tablet, 4 on desktop */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard 
           title="Totalt sensorer" 
           value={totalSensors} 
@@ -183,71 +175,71 @@ export default function DashboardPage() {
         />
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2 grid gap-6 md:grid-cols-2">
-            {sensors.length > 0 ? (
-              sensors.map((sensor) => (
+      {/* Main Content Grid - Responsive layout */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        {/* Sensors Section - Takes 2/3 on large screens */}
+        <div className="xl:col-span-2 space-y-6">
+          {sensors.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {sensors.map((sensor) => (
                 <SensorCard key={sensor.id} sensor={sensor} />
-              ))
-            ) : (
-              <Card className="md:col-span-2 flex items-center justify-center h-64">
-                <CardContent className="text-center text-muted-foreground p-6">
-                  <p className="font-semibold">Ingen sensorer funnet.</p>
-                  <p className="text-sm mb-2">Legg til en sensor for å begynne overvåking.</p>
-                  <p className="text-xs text-muted-foreground">
-                    Firebase path: users/{user.uid}/sensors
-                  </p>
-                </CardContent>
-              </Card>
-            )}
+              ))}
+            </div>
+          ) : (
+            <Card className="flex items-center justify-center h-64">
+              <CardContent className="text-center text-muted-foreground p-6">
+                <p className="font-semibold">Ingen sensorer funnet.</p>
+                <p className="text-sm">Legg til en sensor for å begynne overvåking.</p>
+              </CardContent>
+            </Card>
+          )}
         </div>
         
-        <Card>
+        {/* Alerts Section - Takes 1/3 on large screens, full width on smaller */}
+        <div className="xl:col-span-1">
+          <Card className="h-full">
             <CardHeader>
-                <CardTitle className="font-headline">Siste varsler</CardTitle>
-                <CardDescription>Logg over nylige systemvarsler.</CardDescription>
+              <CardTitle className="font-headline">Siste varsler</CardTitle>
+              <CardDescription>Logg over nylige systemvarsler.</CardDescription>
             </CardHeader>
             <CardContent>
-                {alerts.length > 0 ? (
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Type</TableHead>
-                                <TableHead>Melding</TableHead>
-                                <TableHead>Tid</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {alerts.map((alert) => {
-                              let alertDate: Date;
-                              try {
-                                alertDate = alert.timestamp?.toDate ? alert.timestamp.toDate() : new Date(alert.timestamp as any);
-                              } catch (error) {
-                                alertDate = new Date();
-                              }
-                              return (
-                                <TableRow key={alert.id}>
-                                    <TableCell>
-                                        <Badge variant={getAlertBadgeVariant(alert.type)}>
-                                            {alert.type}
-                                        </Badge>
-                                    </TableCell>
-                                    <TableCell className="font-medium">{alert.message}</TableCell>
-                                    <TableCell className="text-muted-foreground text-sm">
-                                        {formatDistanceToNow(alertDate, { addSuffix: true })}
-                                    </TableCell>
-                                </TableRow>
-                              );
-                            })}
-                        </TableBody>
-                    </Table>
-                ) : (
-                    <p className="text-center text-sm text-muted-foreground py-8">
-                        Ingen varsler ennå.
-                    </p>
-                )}
+              {alerts.length > 0 ? (
+                <div className="space-y-3">
+                  {alerts.map((alert) => {
+                    let alertDate: Date;
+                    try {
+                      alertDate = alert.timestamp?.toDate ? alert.timestamp.toDate() : new Date(alert.timestamp as any);
+                    } catch (error) {
+                      alertDate = new Date();
+                    }
+                    return (
+                      <div 
+                        key={alert.id}
+                        className="flex items-start gap-3 p-3 rounded-lg border bg-card hover:bg-accent/5 transition-colors"
+                      >
+                        <Badge variant={getAlertBadgeVariant(alert.type)} className="mt-0.5">
+                          {alert.type}
+                        </Badge>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium leading-none mb-1">
+                            {alert.message}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {formatDistanceToNow(alertDate, { addSuffix: true })}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-center text-sm text-muted-foreground py-8">
+                  Ingen varsler ennå.
+                </p>
+              )}
             </CardContent>
-        </Card>
+          </Card>
+        </div>
       </div>
     </div>
   );
