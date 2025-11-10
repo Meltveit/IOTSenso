@@ -15,6 +15,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Table,
   TableBody,
@@ -23,13 +25,19 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Loader2, CheckCircle, AlertCircle, CreditCard, FileText } from "lucide-react";
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "@/components/ui/alert";
+import { Loader2, CheckCircle, AlertCircle, CreditCard, FileText, AlertTriangle, Info } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { collection, query, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Sensor } from "@/lib/types";
 import Link from "next/link";
+import { getPriceBreakdown, formatPrice } from "@/lib/stripe-pricing";
 
 interface SubscriptionSectionProps {
   userProfile: User;
@@ -42,16 +50,25 @@ export default function SubscriptionSection({
   const [sensors, setSensors] = useState<Sensor[]>([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
-  const [sensorCount, setSensorCount] = useState(0);
+  const [desiredSensorCount, setDesiredSensorCount] = useState(1);
 
   const isBusiness = userProfile.accountType === "business";
-  const PRICE_PER_SENSOR = 79;
+  const currentSensorCount = sensors.length;
+  const subscribedSensorCount = userProfile.numberOfSensors || 0;
+  const hasActiveSubscription = userProfile.subscriptionStatus === "active";
+
+  // Bedrifter ser pris uten MVA, private ser pris med MVA
+  const includeVat = !isBusiness;
 
   useEffect(() => {
     if (user) {
       loadSensors();
     }
   }, [user]);
+
+  useEffect(() => {
+    setDesiredSensorCount(Math.max(subscribedSensorCount, currentSensorCount, 1));
+  }, [subscribedSensorCount, currentSensorCount]);
 
   const loadSensors = () => {
     if (!user) return;
@@ -66,7 +83,6 @@ export default function SubscriptionSection({
         ...doc.data(),
       })) as Sensor[];
       setSensors(sensorsData);
-      setSensorCount(sensorsData.length);
       setLoading(false);
     });
 
@@ -75,6 +91,13 @@ export default function SubscriptionSection({
 
   const handleUpdateSubscription = async () => {
     if (!user) return;
+
+    if (desiredSensorCount < currentSensorCount) {
+      toast.error(
+        `Du kan ikke abonnere på færre sensorer (${desiredSensorCount}) enn du allerede har registrert (${currentSensorCount}). Fjern sensorer først.`
+      );
+      return;
+    }
 
     setUpdating(true);
     try {
@@ -86,7 +109,7 @@ export default function SubscriptionSection({
           Authorization: `Bearer ${idToken}`,
         },
         body: JSON.stringify({
-          quantity: sensorCount,
+          quantity: desiredSensorCount,
           accountType: userProfile.accountType,
           customerId: userProfile.stripeCustomerId,
           subscriptionId: userProfile.stripeSubscriptionId,
@@ -114,8 +137,7 @@ export default function SubscriptionSection({
     }
   };
 
-  const totalMonthlyCost = sensorCount * PRICE_PER_SENSOR;
-  const hasActiveSubscription = userProfile.subscriptionStatus === "active";
+  const priceBreakdown = getPriceBreakdown(desiredSensorCount, includeVat);
 
   if (loading) {
     return (
@@ -127,8 +149,22 @@ export default function SubscriptionSection({
     );
   }
 
+  const hasExcessSensors = currentSensorCount > subscribedSensorCount && hasActiveSubscription;
+
   return (
     <div className="space-y-6">
+      {hasExcessSensors && (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Advarsel: For mange sensorer</AlertTitle>
+          <AlertDescription>
+            Du har {currentSensorCount} sensorer registrert, men abonnerer bare på {subscribedSensorCount}.
+            Oppdater abonnementet ditt eller fjern {currentSensorCount - subscribedSensorCount} sensor(er).
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Hovedkort */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -136,13 +172,11 @@ export default function SubscriptionSection({
               <CardTitle>Abonnementsoversikt</CardTitle>
               <CardDescription>
                 {isBusiness
-                  ? "Bedriftsabonnement - Faktura sendes månedlig"
-                  : "Privat abonnement - Betaling via kort"}
+                  ? "Bedriftsabonnement - Faktura sendes månedlig (ekskl. MVA)"
+                  : "Privat abonnement - Betaling via kort (inkl. MVA)"}
               </CardDescription>
             </div>
-            <Badge
-              variant={hasActiveSubscription ? "default" : "secondary"}
-            >
+            <Badge variant={hasActiveSubscription ? "default" : "secondary"}>
               {hasActiveSubscription ? (
                 <>
                   <CheckCircle className="mr-1 h-3 w-3" />
@@ -158,39 +192,136 @@ export default function SubscriptionSection({
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
+          {/* Status oversikt */}
           <div className="grid gap-4 md:grid-cols-3">
             <div className="rounded-lg border p-4">
               <div className="text-sm text-muted-foreground mb-1">
-                Antall sensorer
+                Registrerte sensorer
               </div>
-              <div className="text-2xl font-bold">{sensorCount}</div>
+              <div className="text-2xl font-bold">{currentSensorCount}</div>
             </div>
             <div className="rounded-lg border p-4">
               <div className="text-sm text-muted-foreground mb-1">
-                Pris per sensor
+                Abonnerte sensorer
               </div>
-              <div className="text-2xl font-bold">{PRICE_PER_SENSOR} kr/mnd</div>
+              <div className="text-2xl font-bold">{subscribedSensorCount}</div>
             </div>
             <div className="rounded-lg border p-4 bg-accent/10">
               <div className="text-sm text-muted-foreground mb-1">
-                Total per måned
+                Ledige plasser
               </div>
               <div className="text-2xl font-bold text-accent">
-                {totalMonthlyCost} kr
+                {Math.max(0, subscribedSensorCount - currentSensorCount)}
               </div>
             </div>
           </div>
 
           <Separator />
 
+          {/* Endre abonnement */}
+          <div className="space-y-4">
+            <div>
+              <h3 className="text-lg font-semibold mb-4">
+                {hasActiveSubscription ? "Endre abonnement" : "Opprett abonnement"}
+              </h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Velg hvor mange sensorer du vil abonnere på. Du må abonnere på minst like mange som du har registrert.
+              </p>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="sensorCount">Antall sensorer</Label>
+                <Input
+                  id="sensorCount"
+                  type="number"
+                  min={currentSensorCount || 1}
+                  value={desiredSensorCount}
+                  onChange={(e) => setDesiredSensorCount(parseInt(e.target.value) || 1)}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Minimum: {currentSensorCount || 1} (du har {currentSensorCount} sensor{currentSensorCount !== 1 ? 'er' : ''})
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Pris per sensor</Label>
+                <div className="h-10 flex items-center">
+                  <span className="text-2xl font-bold">
+                    {formatPrice(priceBreakdown.pricePerSensor)}/mnd
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {isBusiness ? "Ekskl. MVA - " : "Inkl. 25% MVA - "}
+                  Volumrabatt anvendes automatisk
+                </p>
+              </div>
+            </div>
+
+            {/* Prissammendrag */}
+            <div className="rounded-lg border p-4 space-y-3">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">
+                  {desiredSensorCount} sensor{desiredSensorCount !== 1 ? 'er' : ''} × {formatPrice(priceBreakdown.pricePerSensor)}
+                </span>
+                <span className="font-medium">
+                  {formatPrice(priceBreakdown.subtotal)}
+                </span>
+              </div>
+              
+              {includeVat && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">MVA (25%)</span>
+                  <span className="font-medium">
+                    {formatPrice(priceBreakdown.vat)}
+                  </span>
+                </div>
+              )}
+              
+              <Separator />
+              
+              <div className="flex justify-between items-center">
+                <div>
+                  <div className="text-sm text-muted-foreground">
+                    Total per måned {isBusiness ? "(ekskl. MVA)" : "(inkl. MVA)"}
+                  </div>
+                  <div className="text-3xl font-bold text-accent">
+                    {formatPrice(priceBreakdown.total)}
+                  </div>
+                </div>
+              </div>
+
+              {isBusiness && (
+                <Alert>
+                  <Info className="h-4 w-4" />
+                  <AlertDescription className="text-sm">
+                    MVA (25%) vil bli lagt til på fakturaen: {formatPrice(priceBreakdown.vat)}
+                    <br />
+                    <strong>Total inkl. MVA: {formatPrice(priceBreakdown.total * 1.25)}</strong>
+                  </AlertDescription>
+                </Alert>
+              )}
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Aktive sensorer */}
           <div>
             <h3 className="text-lg font-semibold mb-4">Aktive sensorer</h3>
-            {sensors.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <p>Ingen sensorer registrert ennå</p>
-                <Button className="mt-4" asChild>
-                  <Link href="/sensors">Legg til sensor</Link>
-                </Button>
+            {currentSensorCount === 0 ? (
+              <div className="text-center py-8 border rounded-lg bg-muted/50">
+                <p className="text-muted-foreground mb-2">Ingen sensorer registrert ennå</p>
+                <p className="text-sm text-muted-foreground mb-4">
+                  {hasActiveSubscription 
+                    ? "Du har plass til sensorer. Legg til en nå!"
+                    : "Opprett et abonnement først før du legger til sensorer."}
+                </p>
+                {hasActiveSubscription && (
+                  <Button asChild>
+                    <Link href="/sensors">Legg til sensor</Link>
+                  </Button>
+                )}
               </div>
             ) : (
               <div className="border rounded-lg">
@@ -200,42 +331,51 @@ export default function SubscriptionSection({
                       <TableHead>Sensornavn</TableHead>
                       <TableHead>Type</TableHead>
                       <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Pris/mnd</TableHead>
+                      <TableHead className="text-right">
+                        Pris/mnd {isBusiness ? "(ekskl. MVA)" : "(inkl. MVA)"}
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {sensors.map((sensor) => (
-                      <TableRow key={sensor.id}>
-                        <TableCell className="font-medium">
-                          {sensor.name}
-                        </TableCell>
-                        <TableCell className="capitalize">
-                          {sensor.type}
-                        </TableCell>
-                        <TableCell>
-                          <Badge
-                            variant={
-                              sensor.status === "ok"
-                                ? "default"
-                                : sensor.status === "critical"
-                                ? "destructive"
-                                : "secondary"
-                            }
-                          >
-                            {sensor.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {PRICE_PER_SENSOR} kr
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                    {sensors.map((sensor, index) => {
+                      const isOverLimit = index >= subscribedSensorCount;
+                      return (
+                        <TableRow key={sensor.id} className={isOverLimit ? "bg-destructive/10" : ""}>
+                          <TableCell className="font-medium">
+                            {sensor.name}
+                            {isOverLimit && (
+                              <Badge variant="destructive" className="ml-2">
+                                Over grense
+                              </Badge>
+                            )}
+                          </TableCell>
+                          <TableCell className="capitalize">{sensor.type}</TableCell>
+                          <TableCell>
+                            <Badge
+                              variant={
+                                sensor.status === "ok"
+                                  ? "default"
+                                  : sensor.status === "critical"
+                                  ? "destructive"
+                                  : "secondary"
+                              }
+                            >
+                              {sensor.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {formatPrice(priceBreakdown.pricePerSensor)}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </div>
             )}
           </div>
 
+          {/* Betalingsmetode info */}
           {isBusiness ? (
             <div className="rounded-lg border p-4 bg-blue-50 dark:bg-blue-950">
               <div className="flex gap-3">
@@ -245,8 +385,8 @@ export default function SubscriptionSection({
                     Fakturabetaling
                   </h4>
                   <p className="text-sm text-blue-800 dark:text-blue-200 mt-1">
-                    Faktura sendes til {userProfile.invoiceEmail || userProfile.email} 
-                    med 30 dagers betalingsfrist.
+                    Faktura sendes til {userProfile.invoiceEmail || userProfile.email} med 30 dagers betalingsfrist.
+                    Alle priser er ekskl. 25% MVA.
                   </p>
                 </div>
               </div>
@@ -260,7 +400,7 @@ export default function SubscriptionSection({
                     Kortbetaling
                   </h4>
                   <p className="text-sm text-green-800 dark:text-green-200 mt-1">
-                    Betalingen trekkes automatisk fra ditt kort hver måned.
+                    Betalingen trekkes automatisk fra ditt kort hver måned. Alle priser inkluderer 25% MVA.
                     {userProfile.stripeCustomerId && (
                       <span> Du kan endre betalingsmetode i Stripe-portalen.</span>
                     )}
@@ -272,34 +412,35 @@ export default function SubscriptionSection({
         </CardContent>
         <CardFooter className="border-t px-6 py-4 flex justify-between">
           <div className="text-sm text-muted-foreground">
-            {sensorCount === 0
-              ? "Legg til sensorer for å starte abonnement"
-              : hasActiveSubscription
-              ? "Abonnementet oppdateres automatisk"
-              : "Aktiver abonnement for å starte overvåking"}
+            {hasActiveSubscription
+              ? "Endringer gjelder fra neste faktureringsperiode"
+              : "Opprett abonnement for å starte overvåking"}
           </div>
-          <Button
-            onClick={handleUpdateSubscription}
-            disabled={updating || sensorCount === 0}
-          >
+          <Button onClick={handleUpdateSubscription} disabled={updating}>
             {updating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {hasActiveSubscription ? "Oppdater abonnement" : "Aktiver abonnement"}
+            {hasActiveSubscription ? "Oppdater abonnement" : "Opprett abonnement"}
           </Button>
         </CardFooter>
       </Card>
 
+      {/* Stripe portal for private */}
       {!isBusiness && userProfile.stripeCustomerId && (
         <Card>
           <CardHeader>
-            <CardTitle>Administrer abonnement i Stripe</CardTitle>
+            <CardTitle>Administrer i Stripe</CardTitle>
             <CardDescription>
-              Endre betalingsmetode, se fakturaer og administrer abonnement
+              Endre betalingsmetode og se fakturaer
             </CardDescription>
           </CardHeader>
           <CardFooter className="border-t px-6 py-4">
-            <Button 
+            <Button
               variant="outline"
-              onClick={() => window.open(`https://billing.stripe.com/p/login/test_${userProfile.stripeCustomerId}`, '_blank')}
+              onClick={() =>
+                window.open(
+                  `https://billing.stripe.com/p/login/test_${userProfile.stripeCustomerId}`,
+                  "_blank"
+                )
+              }
             >
               Åpne Stripe-portal
             </Button>

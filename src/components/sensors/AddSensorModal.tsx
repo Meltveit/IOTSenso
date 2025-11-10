@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -21,349 +21,294 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Slider } from "@/components/ui/slider";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Progress } from "@/components/ui/progress";
-import { Building, Sensor, SensorType } from "@/lib/types";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { 
+  SensorType, 
+  SENSOR_TYPE_LABELS, 
+  SENSOR_TYPE_DESCRIPTIONS, 
+  SENSOR_UNITS 
+} from "@/lib/types";
 import { 
   addDoc, 
   collection, 
   Timestamp, 
+  doc, 
+  getDoc, 
   query, 
-  where, 
-  getDocs,
-  updateDoc,
-  doc,
-  collectionGroup
+  getDocs 
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { Plus, AlertCircle, Loader2, CheckCircle2, Clock } from "lucide-react";
-import AddBuildingModal from "@/components/buildings/AddBuildingModal";
+import { Loader2, AlertCircle } from "lucide-react";
+import Link from "next/link";
 
 interface AddSensorModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSensorAdded?: (sensor: Sensor) => void;
+  buildingId?: string;
 }
-
-const sensorTypeDetails = {
-  temperature: { unit: '°C', min: -40, max: 120, warning: 30, critical: 40 },
-  moisture: { unit: '%', min: 0, max: 100, warning: 60, critical: 80 },
-  weight: { unit: 'kg', min: 0, max: 500, warning: 200, critical: 400 },
-  ir: { unit: 'cm', min: 0, max: 1000, warning: 100, critical: 50 },
-  flow: { unit: 'l/min', min: 0, max: 100, warning: 50, critical: 80 },
-};
 
 export default function AddSensorModal({
   open,
   onOpenChange,
-  onSensorAdded
+  buildingId,
 }: AddSensorModalProps) {
   const { user } = useAuth();
-  const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [buildings, setBuildings] = useState<Building[]>([]);
-  const [showAddBuildingModal, setShowAddBuildingModal] = useState(false);
-  
+  const [checkingLimit, setCheckingLimit] = useState(true);
+  const [canAddSensor, setCanAddSensor] = useState(false);
+  const [limitInfo, setLimitInfo] = useState({ current: 0, max: 0 });
+
   const [formData, setFormData] = useState({
     sensorId: "",
-    sensorType: "" as SensorType,
-    buildingId: "",
     name: "",
+    type: "temp_humidity" as SensorType,
     location: "",
-    warningThreshold: 50,
-    criticalThreshold: 100,
-    alertEmail: true,
-    alertSms: false
+    buildingId: buildingId || "",
   });
-
-  const loadBuildings = useCallback(async () => {
-    if (!user) return;
-    try {
-      const buildingsQuery = query(collection(db, "users", user.uid, "buildings"));
-      const snapshot = await getDocs(buildingsQuery);
-      const buildingsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Building[];
-      setBuildings(buildingsData);
-    } catch (error) {
-      console.error("Feil ved lasting av bygninger:", error);
-      toast.error("Kunne ikke hente bygningslisten.");
-    }
-  }, [user]);
 
   useEffect(() => {
     if (open && user) {
-      loadBuildings();
+      checkSensorLimit();
     }
-  }, [open, user, loadBuildings]);
+  }, [open, user]);
 
-  useEffect(() => {
-    if (formData.sensorType) {
-        const details = sensorTypeDetails[formData.sensorType];
-        setFormData(prev => ({
-            ...prev,
-            warningThreshold: details.warning,
-            criticalThreshold: details.critical
-        }));
-    }
-  }, [formData.sensorType]);
-
-  const handleClose = () => {
-    onOpenChange(false);
-    setTimeout(() => resetForm(), 300);
-  }
-  
-  const verifySensorId = async () => {
-    if (!formData.sensorId || !formData.sensorType) {
-      toast.error("Sensor-ID og sensortype må fylles ut.");
-      return;
-    }
-    setLoading(true);
-    try {
-      const sensorsQuery = query(
-        collection(db, "users", user!.uid, "sensors"),
-        where("sensorId", "==", formData.sensorId)
-      );
-      const existingUserSensors = await getDocs(sensorsQuery);
-      if (!existingUserSensors.empty) {
-        toast.error("Sensoren er allerede registrert på din konto.");
-        return;
-      }
-
-      const allSensorsQuery = query(
-        collectionGroup(db, "sensors"),
-        where("sensorId", "==", formData.sensorId)
-      );
-      const allSensors = await getDocs(allSensorsQuery);
-      if (!allSensors.empty) {
-        toast.error("Denne sensoren er allerede registrert av en annen bruker. Kontakt support hvis du mener dette er en feil.");
-        return;
-      }
-      
-      toast.success("Sensor-ID er godkjent!");
-      setStep(2);
-    } catch (error) {
-      console.error("Feil ved verifisering av sensor:", error);
-      toast.error("En feil oppstod under verifisering.");
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  const selectBuilding = () => {
-    if (!formData.buildingId && formData.buildingId !== "none") {
-      toast.error("Vennligst velg en bygning eller \'Ingen bygning\'.");
-      return;
-    }
-    setStep(3);
-  };
-  
-  const setNameAndLocation = () => {
-    if (!formData.name) {
-      toast.error("Vennligst gi sensoren et navn.");
-      return;
-    }
-    setStep(4);
-  };
-
-  const activateSensor = async () => {
+  const checkSensorLimit = async () => {
     if (!user) return;
+
+    setCheckingLimit(true);
+    try {
+      const userDoc = await getDoc(doc(db, "users", user.uid));
+      const userData = userDoc.data();
+      const maxSensors = userData?.numberOfSensors || 0;
+      const hasActiveSubscription = userData?.subscriptionStatus === "active";
+
+      const sensorsQuery = query(collection(db, "users", user.uid, "sensors"));
+      const sensorsSnapshot = await getDocs(sensorsQuery);
+      const currentSensors = sensorsSnapshot.size;
+
+      setLimitInfo({ current: currentSensors, max: maxSensors });
+
+      if (!hasActiveSubscription) {
+        setCanAddSensor(false);
+      } else if (currentSensors >= maxSensors) {
+        setCanAddSensor(false);
+      } else {
+        setCanAddSensor(true);
+      }
+    } catch (error) {
+      console.error("Error checking sensor limit:", error);
+      toast.error("Kunne ikke verifisere sensorgrense");
+    } finally {
+      setCheckingLimit(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+
+    if (!canAddSensor) {
+      toast.error("Du har nådd grensen for antall sensorer i ditt abonnement");
+      return;
+    }
+
     setLoading(true);
     try {
-      const sensorDetails = sensorTypeDetails[formData.sensorType];
-      const newSensorData = {
-        sensorId: formData.sensorId,
+      const sensorData = {
         userId: user.uid,
-        buildingId: formData.buildingId !== "none" ? formData.buildingId : undefined,
-        type: formData.sensorType,
+        sensorId: formData.sensorId,
         name: formData.name,
-        location: formData.location || undefined,
-        thresholds: {
-          warning: formData.warningThreshold,
-          critical: formData.criticalThreshold,
-        },
-        alertMethods: ['email' as const, ...(formData.alertSms ? ['sms' as const] : [])],
-        batteryLevel: 100, // Start with full battery
-        status: 'pending' as const,
+        type: formData.type,
+        location: formData.location,
+        buildingId: formData.buildingId || null,
+        status: "pending" as const,
         currentValue: 0,
-        unit: sensorDetails.unit,
+        unit: SENSOR_UNITS[formData.type][0],
+        batteryLevel: 100,
+        signalStrength: 0,
+        lastCommunication: null,
+        thresholds: {
+          warning: 50,
+          critical: 80,
+        },
+        alertMethods: ["email"],
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
-        lastCommunication: null,
-        equipmentType: 'Generic Equipment'
       };
 
-      const sensorRef = await addDoc(collection(db, "users", user.uid, "sensors"), newSensorData);
+      const sensorsRef = collection(db, "users", user.uid, "sensors");
+      await addDoc(sensorsRef, sensorData);
 
-      if (formData.buildingId && formData.buildingId !== "none") {
-        const building = buildings.find(b => b.id === formData.buildingId);
-        if (building) {
-          await updateDoc(doc(db, "users", user.uid, "buildings", formData.buildingId), {
-            sensorCount: (building.sensorCount || 0) + 1,
-            updatedAt: Timestamp.now()
-          });
-        }
-      }
-
-      toast.success(`${formData.name} er lagt til!`, {
-        description: "Sensoren venter på sin første melding. Status oppdateres automatisk.",
-        duration: 5000
+      toast.success("Sensor lagt til!");
+      setFormData({
+        sensorId: "",
+        name: "",
+        type: "temp_humidity",
+        location: "",
+        buildingId: buildingId || "",
       });
-
-      if (onSensorAdded) {
-        const newSensor: Sensor = {
-          id: sensorRef.id,
-          ...newSensorData,
-        };
-        onSensorAdded(newSensor);
-      }
-      handleClose();
+      onOpenChange(false);
     } catch (error) {
-      console.error("Feil ved aktivering av sensor:", error);
-      toast.error("Kunne ikke aktivere sensoren.");
+      console.error("Error adding sensor:", error);
+      toast.error("Kunne ikke legge til sensor");
     } finally {
       setLoading(false);
     }
   };
 
-  const resetForm = () => {
-    setStep(1);
-    setFormData({
-      sensorId: "", sensorType: "" as SensorType, buildingId: "",
-      name: "", location: "", warningThreshold: 50, criticalThreshold: 100,
-      alertEmail: true, alertSms: false
-    });
-  };
-
-  const sensorDetails = formData.sensorType ? sensorTypeDetails[formData.sensorType] : null;
+  const availableSlots = limitInfo.max - limitInfo.current;
 
   return (
-    <>
-      <Dialog open={open} onOpenChange={handleClose}>
-        <DialogContent className="sm:max-w-[550px]">
-          <DialogHeader>
-            <DialogTitle>Legg til ny sensor</DialogTitle>
-            <DialogDescription>Legg til en ny sensor i systemet ditt ved å følge disse stegene. Steg {step} av 4</DialogDescription>
-            <Progress value={(step / 4) * 100} className="h-2" />
-          </DialogHeader>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[500px]">
+        <DialogHeader>
+          <DialogTitle>Legg til ny sensor</DialogTitle>
+          <DialogDescription>
+            Registrer en ny sensor for overvåking
+          </DialogDescription>
+        </DialogHeader>
 
-          {step === 1 && (
-            <div className="space-y-4 pt-4">
-              <div className="bg-primary/10 p-4 rounded-lg flex gap-3">
-                <AlertCircle className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                <div className="text-sm text-primary/90">
-                  <p className="font-semibold mb-1">Finn din Sensor-ID</p>
-                  <p>Du finner denne unike identifikatoren på enhetens etikett. Den kan være merket som DevEUI, MAC-adresse eller lignende.</p>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="sensorId">Sensor-ID *</Label>
-                <Input id="sensorId" placeholder="F.eks. BC9740FFFE10D33A" value={formData.sensorId} onChange={(e) => setFormData({ ...formData, sensorId: e.target.value.toUpperCase().trim() })} disabled={loading} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="sensorType">Sensortype *</Label>
-                <Select value={formData.sensorType} onValueChange={(value) => setFormData({ ...formData, sensorType: value as SensorType })}>
-                  <SelectTrigger><SelectValue placeholder="Velg type sensor" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="temperature">Temperatursensor</SelectItem>
-                    <SelectItem value="weight">Vektsensor</SelectItem>
-                    <SelectItem value="ir">Avstandssensor (IR)</SelectItem>
-                    <SelectItem value="moisture">Fuktsensor</SelectItem>
-                    <SelectItem value="flow">Strømningssensor</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <DialogFooter className="pt-4">
-                <Button onClick={handleClose} variant="outline" disabled={loading}>Avbryt</Button>
-                <Button onClick={verifySensorId} disabled={loading || !formData.sensorId || !formData.sensorType}>
-                  {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin"/>Verifiserer...</> : "Neste"}
-                </Button>
-              </DialogFooter>
+        {checkingLimit ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="h-8 w-8 animate-spin" />
+          </div>
+        ) : !canAddSensor ? (
+          <div className="space-y-4">
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Kan ikke legge til sensor</AlertTitle>
+              <AlertDescription>
+                {limitInfo.max === 0 ? (
+                  <>
+                    Du har ikke et aktivt abonnement. Opprett et abonnement først for å legge til sensorer.
+                  </>
+                ) : (
+                  <>
+                    Du har brukt alle {limitInfo.max} sensorplasser i ditt abonnement ({limitInfo.current}/{limitInfo.max}).
+                    Oppgrader abonnementet ditt for å legge til flere sensorer.
+                  </>
+                )}
+              </AlertDescription>
+            </Alert>
+
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => onOpenChange(false)}>
+                Avbryt
+              </Button>
+              <Button asChild>
+                <Link href="/settings">
+                  {limitInfo.max === 0 ? "Opprett abonnement" : "Oppgrader abonnement"}
+                </Link>
+              </Button>
             </div>
-          )}
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <Alert>
+              <AlertDescription>
+                Du har {availableSlots} ledig{availableSlots !== 1 ? 'e' : ''} sensorplass{availableSlots !== 1 ? 'er' : ''} ({limitInfo.current}/{limitInfo.max} brukt)
+              </AlertDescription>
+            </Alert>
 
-          {step === 2 && (
-            <div className="space-y-4 pt-4">
-                <div className="bg-green-500/10 p-4 rounded-lg flex gap-3">
-                    <CheckCircle2 className="h-5 w-5 text-green-600 shrink-0 mt-0.5" />
-                    <div className="text-sm">
-                        <p className="font-semibold text-green-900 dark:text-green-100">Sensor-ID godkjent!</p>
-                        <p className="text-green-800 dark:text-green-200">ID-en {formData.sensorId} er tilgjengelig.</p>
+            <div className="space-y-2">
+              <Label htmlFor="sensorId">Sensor-ID *</Label>
+              <Input
+                id="sensorId"
+                placeholder="F.eks. SG-001"
+                value={formData.sensorId}
+                onChange={(e) =>
+                  setFormData({ ...formData, sensorId: e.target.value })
+                }
+                required
+              />
+              <p className="text-xs text-muted-foreground">
+                Unik identifikator for sensoren (finnes på sensoren)
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="name">Sensornavn *</Label>
+              <Input
+                id="name"
+                placeholder="F.eks. Stue sensor"
+                value={formData.name}
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="type">Sensortype *</Label>
+              <Select
+                value={formData.type}
+                onValueChange={(value: SensorType) =>
+                  setFormData({ ...formData, type: value })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="temp_humidity">
+                    <div className="py-2">
+                      <div className="font-medium">{SENSOR_TYPE_LABELS.temp_humidity}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {SENSOR_TYPE_DESCRIPTIONS.temp_humidity}
+                      </div>
                     </div>
-                </div>
-              <div className="space-y-2">
-                <Label htmlFor="buildingId">Knytt sensoren til en bygning for bedre organisering.</Label>
-                <Select value={formData.buildingId} onValueChange={(value) => setFormData({ ...formData, buildingId: value })}>
-                  <SelectTrigger><SelectValue placeholder="Velg bygning (valgfritt)" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Ingen bygning</SelectItem>
-                    {buildings.map((b) => <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-                <Button type="button" variant="outline" size="sm" className="w-full mt-2" onClick={() => setShowAddBuildingModal(true)}><Plus className="mr-2 h-4 w-4" />Opprett ny bygning</Button>
-              </div>
-              <DialogFooter className="pt-4">
-                <Button onClick={() => setStep(1)} variant="outline">Tilbake</Button>
-                <Button onClick={selectBuilding}>Neste</Button>
-              </DialogFooter>
-            </div>
-          )}
-
-          {step === 3 && (
-             <div className="space-y-4 pt-4">
-                <div className="space-y-2">
-                    <Label htmlFor="name">Sensornavn *</Label>
-                    <Input id="name" placeholder="F.eks. Kjellerbod, Taklekkasje" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })}/>
-                    <p className="text-xs text-muted-foreground">Et godt navn hjelper deg å raskt identifisere sensoren, f.eks. \'Vannlekkasje bad\' eller \'Temperatur fryserom\'.</p>
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="location">Plassering (valgfritt)</Label>
-                    <Input id="location" placeholder="F.eks. Nordre hjørne" value={formData.location} onChange={(e) => setFormData({ ...formData, location: e.target.value })}/>
-                </div>
-                <DialogFooter className="pt-4">
-                    <Button onClick={() => setStep(2)} variant="outline">Tilbake</Button>
-                    <Button onClick={setNameAndLocation}>Neste</Button>
-                </DialogFooter>
-            </div>
-          )}
-
-          {step === 4 && sensorDetails && (
-            <div className="space-y-6 pt-4">
-                <div className="space-y-4">
-                    <p className="text-sm font-medium">Angi terskelverdier for varsler</p>
-                    <div className="space-y-2">
-                        <Label>Advarsel: {formData.warningThreshold} {sensorDetails.unit}</Label>
-                        <Slider value={[formData.warningThreshold]} onValueChange={([v]) => setFormData({ ...formData, warningThreshold: v })} min={sensorDetails.min} max={sensorDetails.max} step={(sensorDetails.max - sensorDetails.min) / 100} />
+                  </SelectItem>
+                  <SelectItem value="water_weight">
+                    <div className="py-2">
+                      <div className="font-medium">{SENSOR_TYPE_LABELS.water_weight}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {SENSOR_TYPE_DESCRIPTIONS.water_weight}
+                      </div>
                     </div>
-                    <div className="space-y-2">
-                        <Label>Kritisk: {formData.criticalThreshold} {sensorDetails.unit}</Label>
-                        <Slider value={[formData.criticalThreshold]} onValueChange={([v]) => setFormData({ ...formData, criticalThreshold: v })} min={sensorDetails.min} max={sensorDetails.max} step={(sensorDetails.max - sensorDetails.min) / 100} />
+                  </SelectItem>
+                  <SelectItem value="weight_temp">
+                    <div className="py-2">
+                      <div className="font-medium">{SENSOR_TYPE_LABELS.weight_temp}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {SENSOR_TYPE_DESCRIPTIONS.weight_temp}
+                      </div>
                     </div>
-                </div>
-              <div className="space-y-3">
-                <Label>Varslingsmetoder</Label>
-                <div className="flex items-center space-x-2">
-                  <Checkbox id="alertEmail" checked={formData.alertEmail} onCheckedChange={(c) => setFormData({ ...formData, alertEmail: c as boolean })}/>
-                  <label htmlFor="alertEmail" className="text-sm font-medium">E-postvarsler</label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox id="alertSms" checked={formData.alertSms} onCheckedChange={(c) => setFormData({ ...formData, alertSms: c as boolean })}/>
-                  <label htmlFor="alertSms" className="text-sm font-medium">SMS-varsler (krever abonnement)</label>
-                </div>
-              </div>
-              <DialogFooter className="pt-4">
-                <Button onClick={() => setStep(3)} variant="outline" disabled={loading}>Tilbake</Button>
-                <Button onClick={activateSensor} disabled={loading}>
-                  {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin"/>Aktiverer...</> : "Fullfør aktivering"}
-                </Button>
-              </DialogFooter>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-          )}
-        </DialogContent>
-      </Dialog>
 
-      <AddBuildingModal open={showAddBuildingModal} onOpenChange={setShowAddBuildingModal} onBuildingAdded={(b) => { loadBuildings(); setFormData(prev => ({ ...prev, buildingId: b.id })); setShowAddBuildingModal(false); }} />
-    </>
+            <div className="space-y-2">
+              <Label htmlFor="location">Plassering (valgfritt)</Label>
+              <Input
+                id="location"
+                placeholder="F.eks. Soverom"
+                value={formData.location}
+                onChange={(e) =>
+                  setFormData({ ...formData, location: e.target.value })
+                }
+              />
+            </div>
+
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+              >
+                Avbryt
+              </Button>
+              <Button type="submit" disabled={loading}>
+                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Legg til sensor
+              </Button>
+            </DialogFooter>
+          </form>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }

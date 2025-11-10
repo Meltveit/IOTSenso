@@ -93,8 +93,35 @@ export interface Building {
 // SENSOR TYPES - OPPDATERT MED UPPER/LOWER THRESHOLDS
 // ============================================
 
-export type SensorType = 'weight' | 'ir' | 'moisture' | 'flow' | 'temperature';
+export type SensorType = 'temp_humidity' | 'water_weight' | 'weight_temp';
 export type SensorStatus = 'ok' | 'warning' | 'critical' | 'offline' | 'pending';
+
+// Display names for sensortyper
+export const SENSOR_TYPE_LABELS: Record<SensorType, string> = {
+  temp_humidity: 'Temperatur & Fukt',
+  water_weight: 'Vannmåler & Vekt',
+  weight_temp: 'Vekt & Temperatur',
+};
+
+export const SENSOR_TYPE_DESCRIPTIONS: Record<SensorType, string> = {
+  temp_humidity: 'Kombinert sensor for temperatur og luftfuktighet',
+  water_weight: 'Vannmåler med vektsensor for presist forbruk',
+  weight_temp: 'Vektsensor med temperaturmåling',
+};
+
+// Units for hver sensortype (første verdi er primary)
+export const SENSOR_UNITS: Record<SensorType, string[]> = {
+  temp_humidity: ['°C', '%'],
+  water_weight: ['L', 'kg'],
+  weight_temp: ['kg', '°C'],
+};
+
+// Icons for hver sensortype
+export const SENSOR_TYPE_ICONS: Record<SensorType, string> = {
+  temp_humidity: 'thermometer',
+  water_weight: 'droplet',
+  weight_temp: 'weight',
+};
 
 export interface Sensor {
   id: string;
@@ -105,10 +132,10 @@ export interface Sensor {
   name: string;
   location?: string;
   thresholds: {
-    upper?: number;      // Øvre grense (varsel hvis over)
-    lower?: number;      // Nedre grense (varsel hvis under)
-    warning: number;     // Eksisterende warning threshold
-    critical: number;    // Eksisterende critical threshold
+    upper?: number;
+    lower?: number;
+    warning: number;
+    critical: number;
   };
   alertMethods: ('email' | 'sms')[];
   batteryLevel: number;
