@@ -15,24 +15,49 @@ service cloud.firestore {
     match /users/{userId} {
       allow read, write: if isOwner(userId);
       
-      // Users can manage their own subcollections (buildings, sensors, etc.)
-      match /{subcollection}/{docId} {
+      // Buildings subcollection
+      match /buildings/{buildingId} {
         allow read, write: if isOwner(userId);
       }
       
-       match /sensors/{sensorId}/readings/{readingId} {
-        allow read: if isOwner(userId);
-        // Cloud Functions or other backend processes write readings.
-        allow write: if false; 
+      // Sensors subcollection
+      match /sensors/{sensorId} {
+        allow read, write: if isOwner(userId);
+        
+        // Readings subcollection (nested under sensors)
+        match /readings/{readingId} {
+          allow read: if isOwner(userId);
+          allow write: if false; // Only Cloud Functions can write readings
+        }
+      }
+      
+      // Alerts subcollection
+      match /alerts/{alertId} {
+        allow read, write: if isOwner(userId);
+      }
+      
+      // Other subcollections
+      match /{subcollection}/{docId} {
+        allow read, write: if isOwner(userId);
       }
     }
     
-    // Public collection for available sensors.
-    // Authenticated users can read to verify sensor IDs.
-    // Only backend processes can write/create new inventory.
+    // ✅ CRITICAL: Allow collectionGroup queries on sensors for duplicate checking
+    // This rule allows authenticated users to query sensors across all users
+    // to check if a sensor ID is already registered
+    match /{path=**}/sensors/{sensorId} {
+      allow read: if isAuthenticated();
+    }
+    
+    // ✅ CRITICAL: Allow collectionGroup queries on readings
+    match /{path=**}/readings/{readingId} {
+      allow read: if isAuthenticated();
+    }
+    
+    // Public collection for available sensors (if you implement this feature)
     match /available_sensors/{sensorId} {
-        allow read: if isAuthenticated();
-        allow write: if false;
+      allow read: if isAuthenticated();
+      allow write: if false;
     }
     
     // Public read for products
@@ -42,4 +67,3 @@ service cloud.firestore {
     }
   }
 }
-    
