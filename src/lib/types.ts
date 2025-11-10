@@ -88,6 +88,8 @@ export interface Sensor {
   name: string;
   location?: string; // Spesifikk plassering innenfor bygning
   thresholds: {
+    upperLimit: number;    // NEW: Maximum allowed value (upper boundary)
+    lowerLimit: number;    // NEW: Minimum allowed value (lower boundary)
     warning: number;
     critical: number;
   };
