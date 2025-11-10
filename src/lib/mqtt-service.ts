@@ -1,12 +1,17 @@
-
-// This is a placeholder for the MQTT service.
-// In a real-world scenario, this code would run in a persistent backend service,
-// like a Firebase Function or a standalone Node.js process, NOT in the Next.js frontend.
+// MQTT Service using Firebase Admin SDK
+// This bypasses Firestore security rules for backend operations
 import 'dotenv/config';
 import mqtt from 'mqtt';
-import { db } from '@/lib/firebase';
-import { collection, query, where, getDocs, updateDoc, addDoc, Timestamp, collectionGroup } from 'firebase/firestore';
-import type { Sensor } from '@/lib/types';
+import admin from 'firebase-admin';
+
+// Initialize Firebase Admin
+if (!admin.apps.length) {
+  admin.initializeApp({
+    credential: admin.credential.applicationDefault(),
+  });
+}
+
+const db = admin.firestore();
 
 const options: mqtt.IClientOptions = {
   host: process.env.HIVEMQ_URL,
@@ -34,8 +39,6 @@ export function connectMqtt() {
   });
 
   client.on('message', async (topic, message) => {
-    // topic is 'sensors/{sensorId}/data'
-    // message is a buffer
     console.log(`📩 Received message from topic: ${topic}`);
     console.log(`Payload: ${message.toString()}`);
 
@@ -56,40 +59,49 @@ export function connectMqtt() {
         return;
       }
 
-      // Find the sensor document in Firestore using its physical ID by searching across all 'sensors' subcollections
-      const q = query(collectionGroup(db, 'sensors'), where('sensorId', '==', sensorPhysicalId));
-      const querySnapshot = await getDocs(q);
-
+      // Find the sensor document using collectionGroup query
+      const sensorsQuery = db.collectionGroup('sensors')
+        .where('sensorId', '==', sensorPhysicalId);
+      
+      const querySnapshot = await sensorsQuery.get();
 
       if (querySnapshot.empty) {
         console.warn(`No sensor document found for physical ID: ${sensorPhysicalId}`);
         return;
       }
 
-      // Should only be one, but loop just in case
+      // Process each matching sensor (should only be one)
       for (const doc of querySnapshot.docs) {
-        const sensorDocRef = doc.ref;
-        const sensorData = doc.data() as Sensor;
-
+        const sensorData = doc.data();
         console.log(`Updating Firestore for sensor: ${sensorData.name} (${doc.id})`);
 
+        // Determine status based on thresholds
+        let status: 'ok' | 'warning' | 'critical' = 'ok';
+        
+        if (sensorData.thresholds) {
+          if (value >= sensorData.thresholds.critical) {
+            status = 'critical';
+          } else if (value >= sensorData.thresholds.warning) {
+            status = 'warning';
+          }
+        }
+
         // Update the main sensor document
-        await updateDoc(sensorDocRef, {
+        await doc.ref.update({
           currentValue: value,
-          batteryLevel: battery,
-          lastCommunication: Timestamp.now(),
-          // TODO: Add logic to determine 'status' based on thresholds
+          batteryLevel: battery || 0,
+          lastCommunication: admin.firestore.FieldValue.serverTimestamp(),
+          status: status,
         });
 
         // Add a new reading to the historical data subcollection
-        const readingsRef = collection(sensorDocRef, 'readings');
-        await addDoc(readingsRef, {
+        await doc.ref.collection('readings').add({
           value: value,
-          timestamp: Timestamp.now(),
-          batteryLevel: battery
+          timestamp: admin.firestore.FieldValue.serverTimestamp(),
+          batteryLevel: battery || 0
         });
         
-        console.log(`✅ Successfully updated sensor ${sensorData.name}`);
+        console.log(`✅ Successfully updated sensor ${sensorData.name} - Status: ${status}, Value: ${value}${sensorData.unit}`);
       }
     } catch (error) {
       console.error(`Failed to process message from topic ${topic}:`, error);
@@ -103,12 +115,9 @@ export function connectMqtt() {
 
   client.on('close', () => {
     console.log('MQTT connection closed. Reconnecting...');
-    // You might want a more robust reconnection strategy here
     setTimeout(connectMqtt, 5000); 
   });
 }
 
 // Start the service if the file is run directly
-if (typeof require !== 'undefined' && require.main === module) {
-    connectMqtt();
-}
+connectMqtt();
