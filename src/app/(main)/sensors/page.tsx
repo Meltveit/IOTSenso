@@ -2,12 +2,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Plus, Loader2 } from "lucide-react";
 import SensorCard from "@/components/dashboard/SensorCard";
 import AddSensorModal from "@/components/sensors/AddSensorModal";
 import type { Sensor } from "@/lib/types";
-import { collection, query, onSnapshot } from "firebase/firestore";
+import { collection, query, onSnapshot, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -17,6 +18,8 @@ import {
 
 export default function SensorsPage() {
   const { user } = useAuth();
+  const searchParams = useSearchParams();
+  const buildingId = searchParams.get('buildingId');
   const [sensors, setSensors] = useState<Sensor[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -29,10 +32,13 @@ export default function SensorsPage() {
 
     setLoading(true);
 
-    // Sanntidslytter for sensorer
-    const sensorsQuery = query(
-      collection(db, "users", user.uid, "sensors")
-    );
+    // Sanntidslytter for sensorer - filtrer på building hvis buildingId er satt
+    const sensorsQuery = buildingId
+      ? query(
+          collection(db, "users", user.uid, "sensors"),
+          where("buildingId", "==", buildingId)
+        )
+      : query(collection(db, "users", user.uid, "sensors"));
 
     const unsubscribe = onSnapshot(sensorsQuery, (snapshot) => {
       const sensorsData = snapshot.docs.map(doc => ({
@@ -47,7 +53,7 @@ export default function SensorsPage() {
     });
 
     return () => unsubscribe();
-  }, [user]);
+  }, [user, buildingId]);
 
   if (loading) {
     return (
@@ -69,9 +75,14 @@ export default function SensorsPage() {
     <div className="container mx-auto p-6">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold font-headline">Dine sensorer</h1>
+          <h1 className="text-3xl font-bold font-headline">
+            {buildingId ? 'Sensorer i bygningen' : 'Dine sensorer'}
+          </h1>
           <p className="text-muted-foreground mt-1">
-            Administrer og overvåk alle dine tilkoblede enheter.
+            {buildingId
+              ? 'Administrer sensorer tilknyttet denne bygningen.'
+              : 'Administrer og overvåk alle dine tilkoblede enheter.'
+            }
           </p>
         </div>
         <Button onClick={() => setShowAddModal(true)}>
@@ -102,10 +113,7 @@ export default function SensorsPage() {
       <AddSensorModal
         open={showAddModal}
         onOpenChange={setShowAddModal}
-        onSensorAdded={(sensor) => {
-          // Sensoren legges automatisk til via onSnapshot-lytteren
-          setShowAddModal(false);
-        }}
+        buildingId={buildingId || undefined}
       />
     </div>
   );

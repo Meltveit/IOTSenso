@@ -385,6 +385,9 @@ export default function CameraSection({
           onOpenChange={() => setFullscreenCamera(null)}
         >
           <DialogContent className="max-w-[95vw] h-[95vh] p-0">
+            <DialogHeader className="sr-only">
+              <DialogTitle>{fullscreenCamera.name}</DialogTitle>
+            </DialogHeader>
             <div className="relative w-full h-full bg-black">
               <Button
                 variant="ghost"

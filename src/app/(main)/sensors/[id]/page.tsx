@@ -44,6 +44,7 @@ export default function SensorDetailPage() {
           const data = readingDoc.data();
           return {
             value: data.value,
+            humidityValue: data.humidityValue,
             timestamp: data.timestamp?.toDate?.() || new Date(),
           };
         }).reverse(); // Reverse to show oldest first in chart

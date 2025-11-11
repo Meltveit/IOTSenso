@@ -38,6 +38,7 @@ import Link from "next/link";
 import { format } from "date-fns";
 import { nb } from "date-fns/locale";
 import SensorCard from "@/components/dashboard/SensorCard";
+import CameraSection from "@/components/buildings/CameraSection";
 import { collection, query, where, onSnapshot, doc, deleteDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/contexts/AuthContext";
@@ -66,7 +67,7 @@ interface BuildingDetailsClientProps {
 
 export default function BuildingDetailsClient({
   building,
-  initialSensors,
+  initialSensors = [],
 }: BuildingDetailsClientProps) {
   const { user } = useAuth();
   const router = useRouter();
@@ -119,9 +120,9 @@ export default function BuildingDetailsClient({
     }
   };
 
-  const activeSensors = sensors.filter((s) => s.status === "ok").length;
-  const warningSensors = sensors.filter((s) => s.status === "warning").length;
-  const criticalSensors = sensors.filter((s) => s.status === "critical").length;
+  const activeSensors = sensors?.filter((s) => s.status === "ok").length || 0;
+  const warningSensors = sensors?.filter((s) => s.status === "warning").length || 0;
+  const criticalSensors = sensors?.filter((s) => s.status === "critical").length || 0;
 
   return (
     <div className="space-y-6">
@@ -290,6 +291,12 @@ export default function BuildingDetailsClient({
           </CardContent>
         </Card>
       </div>
+
+      {/* Camera Section */}
+      <CameraSection
+        buildingId={building.id}
+        cameras={building.cameras || []}
+      />
 
       {/* Sensors Section */}
       <div>

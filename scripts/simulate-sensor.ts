@@ -36,11 +36,13 @@ client.on('connect', () => {
 function sendData() {
   // Simulate realistic temperature data (15-30°C)
   const temperature = parseFloat((15 + Math.random() * 15).toFixed(2));
+  // Simulate realistic humidity data (30-70%)
+  const humidity = parseFloat((30 + Math.random() * 40).toFixed(1));
   const batteryLevel = parseFloat((85 + Math.random() * 15).toFixed(1)); // 85-100%
 
   const payload = {
-    value: temperature,
-    unit: '°C',
+    temperature: temperature,
+    humidity: humidity,
     battery: batteryLevel,
     timestamp: new Date().toISOString(),
   };
@@ -51,7 +53,7 @@ function sendData() {
     if (err) {
       console.error('❌ Failed to publish:', err.message);
     } else {
-      console.log(`📤 [${new Date().toLocaleTimeString()}] Sent: ${message}`);
+      console.log(`📤 [${new Date().toLocaleTimeString()}] Sent: Temp: ${temperature}°C, Humidity: ${humidity}%, Battery: ${batteryLevel}%`);
     }
   });
 }

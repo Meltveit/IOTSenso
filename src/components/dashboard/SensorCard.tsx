@@ -189,7 +189,16 @@ export default function SensorCard({ sensor }: SensorCardProps) {
             <div className={cn("text-4xl font-bold", getStatusColor(sensor.status))}>
               {sensor.currentValue} {sensor.unit}
             </div>
-            <div className="text-sm text-muted-foreground mt-1">Nåværende verdi</div>
+            {sensor.humidityValue !== undefined && sensor.type === 'temp_humidity' && (
+              <div className="text-2xl font-semibold text-muted-foreground mt-2">
+                {sensor.humidityValue}%
+              </div>
+            )}
+            <div className="text-sm text-muted-foreground mt-1">
+              {sensor.type === 'temp_humidity' && sensor.humidityValue !== undefined
+                ? 'Temperatur / Fuktighet'
+                : 'Nåværende verdi'}
+            </div>
           </div>
 
           {/* Details */}

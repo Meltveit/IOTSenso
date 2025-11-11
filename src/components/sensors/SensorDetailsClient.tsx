@@ -221,6 +221,15 @@ export default function SensorDetailsClient({
                 {sensor.currentValue.toFixed(1)}
               </div>
               <div className="text-sm text-muted-foreground mt-2">{sensor.unit}</div>
+
+              {sensor.humidityValue !== undefined && sensor.type === 'temp_humidity' && (
+                <div className="mt-4 pt-4 border-t">
+                  <div className="text-3xl font-bold font-headline text-blue-600">
+                    {sensor.humidityValue.toFixed(1)}%
+                  </div>
+                  <div className="text-sm text-muted-foreground mt-1">Fuktighet</div>
+                </div>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-4 pt-4 border-t">

@@ -43,13 +43,24 @@ export function connectMqtt() {
 
       // Extract sensor ID from topic (sensors/{sensorId}/data)
       const sensorPhysicalId = topic.split('/')[1];
-      const value = payload.value;
-      const battery = payload.battery;
 
-      if (typeof value !== 'number') {
-        console.warn('⚠️  Invalid value in payload, skipping...');
+      // Support both old format (payload.value) and new format (payload.temperature + payload.humidity)
+      let value: number;
+      let humidity: number | undefined;
+
+      if (typeof payload.value === 'number') {
+        // Old format: single value
+        value = payload.value;
+      } else if (typeof payload.temperature === 'number') {
+        // New format: temperature and humidity
+        value = payload.temperature;
+        humidity = payload.humidity;
+      } else {
+        console.warn('⚠️  Invalid payload format: no value or temperature field');
         return;
       }
+
+      const battery = payload.battery;
 
       // Find the sensor document using collectionGroup query
       const sensorsQuery = db.collectionGroup('sensors')
@@ -97,19 +108,33 @@ export function connectMqtt() {
         }
 
         // Update the main sensor document
-        await doc.ref.update({
+        const updateData: any = {
           currentValue: value,
           batteryLevel: battery || 0,
           lastCommunication: admin.firestore.FieldValue.serverTimestamp(),
           status: status,
-        });
+        };
+
+        // Add humidity if present (for temp_humidity sensors)
+        if (humidity !== undefined) {
+          updateData.humidityValue = humidity;
+        }
+
+        await doc.ref.update(updateData);
 
         // Add a new reading to the historical data subcollection
-        await doc.ref.collection('readings').add({
+        const readingData: any = {
           value: value,
           timestamp: admin.firestore.FieldValue.serverTimestamp(),
           batteryLevel: battery || 0
-        });
+        };
+
+        // Add humidity if present
+        if (humidity !== undefined) {
+          readingData.humidityValue = humidity;
+        }
+
+        await doc.ref.collection('readings').add(readingData);
 
         // Create alert if needed
         if (alertType) {
@@ -147,6 +172,9 @@ export function connectMqtt() {
         console.log(`✅ Successfully updated sensor ${sensorData.name}`);
         console.log(`   Status: ${status}`);
         console.log(`   Value: ${value}${sensorData.unit}`);
+        if (humidity !== undefined) {
+          console.log(`   Humidity: ${humidity}%`);
+        }
         console.log(`   Battery: ${battery}%`);
       }
     } catch (error) {

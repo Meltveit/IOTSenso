@@ -146,6 +146,7 @@ export interface Sensor {
   lastCommunication: Timestamp | null;
   status: SensorStatus;
   currentValue: number;
+  humidityValue?: number;  // For temp_humidity sensors
   unit: string;
   createdAt: Timestamp;
   updatedAt: Timestamp;
@@ -156,6 +157,7 @@ export interface Sensor {
 
 export interface SensorReading {
   value: number;
+  humidityValue?: number;  // For temp_humidity sensors
   unit: string;
   timestamp: Date | Timestamp;
   batteryLevel: number;

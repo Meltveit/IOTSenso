@@ -77,8 +77,48 @@ export default function SettingsClient() {
   useEffect(() => {
     if (user) {
       loadUserProfile();
+      checkStripeSession();
     }
   }, [user]);
+
+  const checkStripeSession = async () => {
+    if (!user) return;
+
+    // Check if we're returning from Stripe Checkout
+    const urlParams = new URLSearchParams(window.location.search);
+    const sessionId = urlParams.get('session_id');
+    const subscriptionSuccess = urlParams.get('subscription_success');
+
+    if (subscriptionSuccess === 'true' && sessionId) {
+      console.log('🔄 Verifying Stripe session:', sessionId);
+      toast.loading('Verifiserer betaling...');
+
+      try {
+        const response = await fetch('/api/stripe/verify-session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionId, userId: user.uid }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          toast.success(`Abonnement aktivert! Du har nå ${data.numberOfSensors} sensor(er).`);
+          // Reload user profile to get updated subscription info
+          await loadUserProfile();
+        } else {
+          toast.error('Kunne ikke verifisere betaling. Prøv å refresh siden.');
+          console.error('Verification failed:', data);
+        }
+      } catch (error) {
+        console.error('Error verifying session:', error);
+        toast.error('Noe gikk galt ved verifisering av betaling.');
+      }
+
+      // Clean up URL
+      window.history.replaceState({}, '', '/settings');
+    }
+  };
 
   const loadUserProfile = async () => {
     if (!user) return;

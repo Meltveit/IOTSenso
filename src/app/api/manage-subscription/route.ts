@@ -59,10 +59,14 @@ export async function POST(request: Request) {
                     payment_method_types: ['card'],
                     line_items: [{ price: STRIPE_PRICE_ID, quantity }],
                     mode: 'subscription',
-                    success_url: `${request.headers.get('origin')}/settings?subscription_success=true`,
+                    success_url: `${request.headers.get('origin')}/settings?subscription_success=true&session_id={CHECKOUT_SESSION_ID}`,
                     cancel_url: `${request.headers.get('origin')}/settings`,
                 });
-                return NextResponse.json({ checkoutUrl: checkoutSession.url, customerId: stripeCustomerId });
+                return NextResponse.json({
+                    checkoutUrl: checkoutSession.url,
+                    customerId: stripeCustomerId,
+                    sessionId: checkoutSession.id
+                });
             }
         }
 
