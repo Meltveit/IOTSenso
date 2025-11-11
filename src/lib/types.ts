@@ -186,11 +186,15 @@ export interface Alert {
 // ============================================
 // SENSOR PRODUCT TYPES (for public product pages)
 // ============================================
+
+// Product category types (for marketing/sales)
+export type ProductCategory = 'weight' | 'ir' | 'moisture' | 'flow' | 'temp_humidity' | 'water_weight' | 'weight_temp';
+
 export interface SensorProduct {
   id: string;
   name: string;
   subtitle: string;
-  type: SensorType;
+  type: ProductCategory;  // Product category, not technical sensor type
   description: string;
   purpose: string[];
   howItWorks: string;

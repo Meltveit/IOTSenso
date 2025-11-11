@@ -116,7 +116,7 @@ export default function DashboardPage() {
   const criticalAlerts = alerts.filter(a => a.type === 'critical').length;
   
   // Calculate average temperature from temperature sensors
-  const tempSensors = sensors.filter(s => s.type === 'temperature');
+  const tempSensors = sensors.filter(s => s.type === 'temp_humidity');
   const avgTemp = tempSensors.length > 0
     ? (tempSensors.reduce((sum, s) => sum + s.currentValue, 0) / tempSensors.length).toFixed(1)
     : '--';
