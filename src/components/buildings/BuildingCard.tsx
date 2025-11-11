@@ -51,7 +51,10 @@ const buildingIcons = {
   other: Home
 };
 
-function getBuildingStatus(sensors: Sensor[]): { variant: "default" | "destructive" | "secondary" | "outline", text: string } {
+function getBuildingStatus(sensors: Sensor[]): { 
+  variant: "default" | "destructive" | "secondary" | "outline"; 
+  text: string 
+} {
   if (sensors.length === 0) {
     return { variant: "outline", text: 'Ingen sensorer' };
   }
@@ -78,12 +81,11 @@ export default function BuildingCard({ building, sensors }: BuildingCardProps) {
   const activeCount = sensors.filter(s => s.status === 'ok').length;
   const warningCount = sensors.filter(s => s.status === 'warning').length;
   const criticalCount = sensors.filter(s => s.status === 'critical').length;
-  const offlineCount = sensors.filter(s => s.status === 'offline').length;
+  const offlineCount = sensors.filter(s => s.status === 'offline' || s.status === 'pending').length;
 
   const handleDeleteBuilding = async () => {
     if (!user) return;
 
-    // Sjekk om bygningen har sensorer
     if (sensors.length > 0) {
       toast.error(
         `Kan ikke slette bygning med ${sensors.length} sensor${sensors.length > 1 ? 'er' : ''}. Fjern sensorene først.`
@@ -106,135 +108,149 @@ export default function BuildingCard({ building, sensors }: BuildingCardProps) {
   };
 
   return (
-    <Card className="hover:shadow-lg transition-shadow">
-      <CardHeader>
-        <div className="flex justify-between items-start">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-accent/10 rounded-lg">
-              <Icon className="h-6 w-6 text-accent" />
-            </div>
-            <div>
-              <h3 className="text-xl font-bold font-headline">{building.name}</h3>
-              {building.address && (
-                <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
-                  <MapPin className="h-3 w-3" />
-                  <span>{building.address.street}, {building.address.city}</span>
-                </div>
-              )}
-            </div>
-          </div>
-          <Badge variant={status.variant}>
-            {status.text}
-          </Badge>
-        </div>
-      </CardHeader>
-
-      <CardContent className="space-y-4">
-        {/* Statistikk */}
-        <div className="grid grid-cols-4 gap-2">
-          <div className="flex flex-col items-center p-3 bg-green-500/10 rounded-lg">
-            <CheckCircle className="h-5 w-5 text-green-500 mb-1" />
-            <span className="text-2xl font-bold">{activeCount}</span>
-            <span className="text-xs text-muted-foreground">OK</span>
-          </div>
-          
-          <div className="flex flex-col items-center p-3 bg-yellow-500/10 rounded-lg">
-            <AlertTriangle className="h-5 w-5 text-yellow-500 mb-1" />
-            <span className="text-2xl font-bold">{warningCount}</span>
-            <span className="text-xs text-muted-foreground">Advarsel</span>
-          </div>
-          
-          <div className="flex flex-col items-center p-3 bg-red-500/10 rounded-lg">
-            <AlertCircle className="h-5 w-5 text-red-500 mb-1" />
-            <span className="text-2xl font-bold">{criticalCount}</span>
-            <span className="text-xs text-muted-foreground">Kritisk</span>
-          </div>
-          
-          <div className="flex flex-col items-center p-3 bg-gray-500/10 rounded-lg">
-            <WifiOff className="h-5 w-5 text-gray-500 mb-1" />
-            <span className="text-2xl font-bold">{offlineCount}</span>
-            <span className="text-xs text-muted-foreground">Offline</span>
-          </div>
-        </div>
-
-        {/* Sensor-liste (kompakt) */}
-        <div className="space-y-2">
-          {sensors.slice(0, 3).map(sensor => (
-            <div 
-              key={sensor.id} 
-              className="flex items-center justify-between p-2 bg-secondary/50 rounded-lg"
-            >
-              <div className="flex items-center gap-2">
-                <div className={cn("h-2 w-2 rounded-full", {
-                  'bg-green-500': sensor.status === 'ok',
-                  'bg-yellow-500': sensor.status === 'warning',
-                  'bg-red-500': sensor.status === 'critical',
-                  'bg-gray-500': sensor.status === 'offline' || sensor.status === 'pending',
-                })} />
-                <span className="text-sm font-medium">{sensor.name}</span>
+    <>
+      <Card className="hover:shadow-lg transition-shadow">
+        <CardHeader>
+          <div className="flex justify-between items-start">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-accent/10 rounded-lg">
+                <Icon className="h-6 w-6 text-accent" />
               </div>
-              <span className="text-sm text-muted-foreground">
-                {sensor.currentValue} {sensor.unit}
-              </span>
+              <div>
+                <h3 className="text-xl font-bold font-headline">{building.name}</h3>
+                {building.address && (
+                  <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
+                    <MapPin className="h-3 w-3" />
+                    <span>{building.address.street}, {building.address.city}</span>
+                  </div>
+                )}
+              </div>
             </div>
-          ))}
-          
-          {sensors.length > 3 && (
-            <p className="text-xs text-center text-muted-foreground">
-              + {sensors.length - 3} flere sensorer
-            </p>
-          )}
-        </div>
-      </CardContent>
+            <Badge variant={status.variant}>
+              {status.text}
+            </Badge>
+          </div>
+        </CardHeader>
 
-      <CardFooter className="flex gap-2">
-        <Button variant="outline" className="flex-1" asChild>
-          <Link href={`/buildings/${building.id}`}>
-            Se detaljer
-          </Link>
-        </Button>
-        <Button variant="outline" className="flex-1" asChild>
-          <Link href={`/sensors?buildingId=${building.id}`}>
-            Administrer
-          </Link>
-        </Button>
-        <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <CardContent className="space-y-4">
+          {/* Statistikk */}
+          <div className="grid grid-cols-4 gap-2">
+            <div className="flex flex-col items-center p-3 bg-green-500/10 rounded-lg">
+              <CheckCircle className="h-5 w-5 text-green-500 mb-1" />
+              <span className="text-2xl font-bold">{activeCount}</span>
+              <span className="text-xs text-muted-foreground">OK</span>
+            </div>
+            
+            <div className="flex flex-col items-center p-3 bg-yellow-500/10 rounded-lg">
+              <AlertTriangle className="h-5 w-5 text-yellow-500 mb-1" />
+              <span className="text-2xl font-bold">{warningCount}</span>
+              <span className="text-xs text-muted-foreground">Advarsel</span>
+            </div>
+            
+            <div className="flex flex-col items-center p-3 bg-red-500/10 rounded-lg">
+              <AlertCircle className="h-5 w-5 text-red-500 mb-1" />
+              <span className="text-2xl font-bold">{criticalCount}</span>
+              <span className="text-xs text-muted-foreground">Kritisk</span>
+            </div>
+            
+            <div className="flex flex-col items-center p-3 bg-gray-500/10 rounded-lg">
+              <WifiOff className="h-5 w-5 text-gray-500 mb-1" />
+              <span className="text-2xl font-bold">{offlineCount}</span>
+              <span className="text-xs text-muted-foreground">Offline</span>
+            </div>
+          </div>
+
+          {/* Sensor-liste (kompakt) */}
+          <div className="space-y-2">
+            {sensors.slice(0, 3).map(sensor => (
+              <div 
+                key={sensor.id} 
+                className="flex items-center justify-between p-2 bg-secondary/50 rounded-lg"
+              >
+                <div className="flex items-center gap-2">
+                  <div className={cn("h-2 w-2 rounded-full", {
+                    'bg-green-500': sensor.status === 'ok',
+                    'bg-yellow-500': sensor.status === 'warning',
+                    'bg-red-500': sensor.status === 'critical',
+                    'bg-gray-500': sensor.status === 'offline' || sensor.status === 'pending',
+                  })} />
+                  <span className="text-sm font-medium">{sensor.name}</span>
+                </div>
+                <span className="text-sm text-muted-foreground">
+                  {sensor.currentValue} {sensor.unit}
+                </span>
+              </div>
+            ))}
+            
+            {sensors.length > 3 && (
+              <p className="text-xs text-center text-muted-foreground">
+                + {sensors.length - 3} flere sensorer
+              </p>
+            )}
+          </div>
+        </CardContent>
+
+        <CardFooter className="flex gap-2">
+          <Button variant="outline" className="flex-1" asChild>
+            <Link href={`/buildings/${building.id}`}>
+              Se detaljer
+            </Link>
+          </Button>
+          <Button variant="outline" className="flex-1" asChild>
+            <Link href={`/sensors?buildingId=${building.id}`}>
+              Administrer
+            </Link>
+          </Button>
           <AlertDialogTrigger asChild>
-            <Button variant="destructive" size="icon">
+            <Button 
+              variant="destructive" 
+              size="icon"
+              onClick={() => setShowDeleteDialog(true)}
+            >
               <Trash2 className="h-4 w-4" />
             </Button>
           </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Slett bygning?</AlertDialogTitle>
-              <AlertDialogDescription>
+        </CardFooter>
+      </Card>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Slett bygning?</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-3">
+              <p>
                 Er du sikker på at du vil slette <strong>{building.name}</strong>?
-                {sensors.length > 0 ? (
-                  <span className="block mt-3 p-3 bg-destructive/10 border border-destructive rounded-lg text-destructive font-medium">
+              </p>
+              {sensors.length > 0 ? (
+                <div className="p-3 bg-destructive/10 border border-destructive rounded-lg">
+                  <p className="text-destructive font-medium text-sm">
                     ⚠️ Denne bygningen har {sensors.length} sensor{sensors.length > 1 ? 'er' : ''}. 
+                  </p>
+                  <p className="text-destructive text-sm mt-1">
                     Du må fjerne alle sensorer før du kan slette bygningen.
-                  </span>
-                ) : (
-                  <span className="block mt-3 text-destructive font-medium">
-                    Denne handlingen kan ikke angres.
-                  </span>
-                )}
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel disabled={deleting}>Avbryt</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={handleDeleteBuilding}
-                disabled={deleting || sensors.length > 0}
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              >
-                {deleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Slett bygning
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      </CardFooter>
-    </Card>
+                  </p>
+                </div>
+              ) : (
+                <p className="text-destructive font-medium text-sm">
+                  ⚠️ Denne handlingen kan ikke angres.
+                </p>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Avbryt</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteBuilding}
+              disabled={deleting || sensors.length > 0}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Slett bygning
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }

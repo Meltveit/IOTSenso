@@ -281,3 +281,24 @@ export interface SignupFormData {
   referenceNumber?: string;
   vatNumber?: string;
 }
+// Finn AvailableSensor interface og erstatt/oppdater:
+
+export interface AvailableSensor {
+  sensorId: string;           // Unik sensor-ID (f.eks. SG-001)
+  type: SensorType;           // Type sensor
+  manufacturedAt?: Timestamp; // Når sensoren ble produsert
+  registeredToUser?: string;  // UserID til nåværende eier (null hvis ledig)
+  registeredAt?: Timestamp;   // Når sensoren ble registrert til nåværende eier
+  previousOwners?: {          // Historikk over tidligere eiere
+    userId: string;
+    registeredAt: Timestamp;
+    unregisteredAt: Timestamp;
+  }[
+    
+  ];
+  simCardNumber?: string;     // SIM-kortnummer hvis relevant
+  firmwareVersion?: string;   // Firmware-versjon
+  status: 'available' | 'registered' | 'inactive';  // Status
+  createdAt: Timestamp;       // Når sensoren ble opprettet i systemet
+  updatedAt: Timestamp;       // Sist oppdatert
+}

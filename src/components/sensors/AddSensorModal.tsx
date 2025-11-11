@@ -35,12 +35,15 @@ import {
   doc, 
   getDoc, 
   query, 
-  getDocs 
+  getDocs,
+  where,
+  setDoc,
+  updateDoc
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { Loader2, AlertCircle } from "lucide-react";
+import { Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 
 interface AddSensorModalProps {
@@ -57,8 +60,14 @@ export default function AddSensorModal({
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [checkingLimit, setCheckingLimit] = useState(true);
+  const [checkingSensorId, setCheckingSensorId] = useState(false);
   const [canAddSensor, setCanAddSensor] = useState(false);
   const [limitInfo, setLimitInfo] = useState({ current: 0, max: 0 });
+  const [sensorIdStatus, setSensorIdStatus] = useState<{
+    valid: boolean;
+    message: string;
+    type: 'idle' | 'checking' | 'available' | 'unavailable' | 'owned';
+  }>({ valid: false, message: '', type: 'idle' });
 
   const [formData, setFormData] = useState({
     sensorId: "",
@@ -73,6 +82,20 @@ export default function AddSensorModal({
       checkSensorLimit();
     }
   }, [open, user]);
+
+  // Debounced sensor ID validation
+  useEffect(() => {
+    if (!formData.sensorId || formData.sensorId.length < 3) {
+      setSensorIdStatus({ valid: false, message: '', type: 'idle' });
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      validateSensorId(formData.sensorId);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [formData.sensorId]);
 
   const checkSensorLimit = async () => {
     if (!user) return;
@@ -105,6 +128,72 @@ export default function AddSensorModal({
     }
   };
 
+  const validateSensorId = async (sensorId: string) => {
+    if (!user) return;
+
+    setCheckingSensorId(true);
+    setSensorIdStatus({ valid: false, message: 'Validerer...', type: 'checking' });
+
+    try {
+      // 1. Sjekk om brukeren allerede har denne sensoren
+      const userSensorsQuery = query(
+        collection(db, "users", user.uid, "sensors"),
+        where("sensorId", "==", sensorId)
+      );
+      const userSensorsSnapshot = await getDocs(userSensorsQuery);
+
+      if (!userSensorsSnapshot.empty) {
+        setSensorIdStatus({
+          valid: false,
+          message: 'Du har allerede registrert denne sensoren',
+          type: 'owned'
+        });
+        setCheckingSensorId(false);
+        return;
+      }
+
+      // 2. Sjekk available_sensors collection
+      const availableSensorRef = doc(db, "available_sensors", sensorId);
+      const availableSensorDoc = await getDoc(availableSensorRef);
+
+      if (availableSensorDoc.exists()) {
+        const sensorData = availableSensorDoc.data();
+        
+        if (sensorData.status === 'registered' && sensorData.registeredToUser) {
+          // Sensoren er registrert til noen andre
+          setSensorIdStatus({
+            valid: false,
+            message: 'Denne sensoren er allerede registrert til en annen bruker',
+            type: 'unavailable'
+          });
+        } else {
+          // Sensoren er tilgjengelig
+          setSensorIdStatus({
+            valid: true,
+            message: 'Sensor-ID er tilgjengelig og kan registreres',
+            type: 'available'
+          });
+        }
+      } else {
+        // Sensoren finnes ikke i systemet - opprette ny
+        setSensorIdStatus({
+          valid: true,
+          message: 'Ny sensor - vil bli opprettet i systemet',
+          type: 'available'
+        });
+      }
+    } catch (error) {
+      console.error("Error validating sensor ID:", error);
+      setSensorIdStatus({
+        valid: false,
+        message: 'Kunne ikke validere sensor-ID',
+        type: 'idle'
+      });
+    } finally {
+      setCheckingSensorId(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
@@ -114,8 +203,41 @@ export default function AddSensorModal({
       return;
     }
 
+    if (!sensorIdStatus.valid) {
+      toast.error("Vennligst vent til sensor-ID er validert");
+      return;
+    }
+
     setLoading(true);
     try {
+      // 1. Opprett/oppdater i available_sensors
+      const availableSensorRef = doc(db, "available_sensors", formData.sensorId);
+      const availableSensorDoc = await getDoc(availableSensorRef);
+
+      if (availableSensorDoc.exists()) {
+        // Oppdater eksisterende sensor
+        await updateDoc(availableSensorRef, {
+          status: "registered",
+          registeredToUser: user.uid,
+          registeredAt: Timestamp.now(),
+          type: formData.type,
+          updatedAt: Timestamp.now(),
+        });
+      } else {
+        // Opprett ny sensor i available_sensors
+        await setDoc(availableSensorRef, {
+          sensorId: formData.sensorId,
+          type: formData.type,
+          status: "registered",
+          registeredToUser: user.uid,
+          registeredAt: Timestamp.now(),
+          previousOwners: [],
+          createdAt: Timestamp.now(),
+          updatedAt: Timestamp.now(),
+        });
+      }
+
+      // 2. Legg til i brukerens sensor collection
       const sensorData = {
         userId: user.uid,
         sensorId: formData.sensorId,
@@ -141,7 +263,7 @@ export default function AddSensorModal({
       const sensorsRef = collection(db, "users", user.uid, "sensors");
       await addDoc(sensorsRef, sensorData);
 
-      toast.success("Sensor lagt til!");
+      toast.success("Sensor lagt til og registrert!");
       setFormData({
         sensorId: "",
         name: "",
@@ -149,6 +271,7 @@ export default function AddSensorModal({
         location: "",
         buildingId: buildingId || "",
       });
+      setSensorIdStatus({ valid: false, message: '', type: 'idle' });
       onOpenChange(false);
     } catch (error) {
       console.error("Error adding sensor:", error);
@@ -223,6 +346,31 @@ export default function AddSensorModal({
                 }
                 required
               />
+              
+              {/* Sensor ID Validation Status */}
+              {sensorIdStatus.type !== 'idle' && (
+                <div className="flex items-center gap-2 text-sm">
+                  {sensorIdStatus.type === 'checking' && (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                      <span className="text-muted-foreground">{sensorIdStatus.message}</span>
+                    </>
+                  )}
+                  {sensorIdStatus.type === 'available' && (
+                    <>
+                      <CheckCircle2 className="h-4 w-4 text-green-600" />
+                      <span className="text-green-600">{sensorIdStatus.message}</span>
+                    </>
+                  )}
+                  {(sensorIdStatus.type === 'unavailable' || sensorIdStatus.type === 'owned') && (
+                    <>
+                      <AlertCircle className="h-4 w-4 text-destructive" />
+                      <span className="text-destructive">{sensorIdStatus.message}</span>
+                    </>
+                  )}
+                </div>
+              )}
+              
               <p className="text-xs text-muted-foreground">
                 Unik identifikator for sensoren (finnes på sensoren)
               </p>
@@ -301,7 +449,10 @@ export default function AddSensorModal({
               >
                 Avbryt
               </Button>
-              <Button type="submit" disabled={loading}>
+              <Button 
+                type="submit" 
+                disabled={loading || !sensorIdStatus.valid || checkingSensorId}
+              >
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Legg til sensor
               </Button>
