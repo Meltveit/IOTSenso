@@ -1,6 +1,6 @@
 // Filsti: src/lib/types.ts
 
-import { FieldValue, Timestamp } from 'firebase/firestore';
+import { Timestamp } from 'firebase/firestore';
 
 // ============================================
 // USER TYPES
@@ -81,12 +81,15 @@ export interface Building {
     postalCode: string;
     city: string;
   };
+  yearBuilt?: number;      // Byggeår
+  size?: number;           // Størrelse i m²
+  occupants?: number;      // Antall beboere/brukere
   imageUrl?: string;
   notes?: string;
   createdAt: Timestamp;
   updatedAt: Timestamp;
   sensorCount: number;
-  cameras?: Camera[];  // Støtte for IP-kameraer
+  cameras?: Camera[];      // Støtte for IP-kameraer
 }
 
 // ============================================
@@ -180,16 +183,6 @@ export interface Alert {
 // AVAILABLE SENSORS
 // ============================================
 
-export interface AvailableSensor {
-  sensorId: string;
-  type: SensorType;
-  manufacturedAt: Timestamp;
-  registeredToUser?: string;
-  registeredAt?: Timestamp;
-  simCardNumber?: string;
-  firmwareVersion: string;
-}
-
 // ============================================
 // SENSOR PRODUCT TYPES (for public product pages)
 // ============================================
@@ -281,8 +274,6 @@ export interface SignupFormData {
   referenceNumber?: string;
   vatNumber?: string;
 }
-// Finn AvailableSensor interface og erstatt/oppdater:
-
 export interface AvailableSensor {
   sensorId: string;           // Unik sensor-ID (f.eks. SG-001)
   type: SensorType;           // Type sensor

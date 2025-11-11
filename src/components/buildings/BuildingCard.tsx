@@ -16,7 +16,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { 
   Home, 
@@ -201,15 +200,13 @@ export default function BuildingCard({ building, sensors }: BuildingCardProps) {
               Administrer
             </Link>
           </Button>
-          <AlertDialogTrigger asChild>
-            <Button 
-              variant="destructive" 
-              size="icon"
-              onClick={() => setShowDeleteDialog(true)}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </AlertDialogTrigger>
+          <Button
+            variant="destructive"
+            size="icon"
+            onClick={() => setShowDeleteDialog(true)}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
         </CardFooter>
       </Card>
 
