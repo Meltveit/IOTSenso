@@ -1,156 +1,246 @@
+// Filsti: src/components/dashboard/SensorCard.tsx
+
 "use client";
 
-import type { Sensor } from "@/lib/types";
+import { useState } from "react";
+import { Sensor } from "@/lib/types";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Thermometer, Droplets, Weight, Ruler, CircleGauge, Clock, WifiOff } from "lucide-react";
-import Link from "next/link";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { 
+  Thermometer, 
+  Wifi, 
+  Battery, 
+  MapPin, 
+  MoreVertical, 
+  Trash2,
+  Loader2
+} from "lucide-react";
+import { format } from "date-fns";
+import { nb } from "date-fns/locale";
 import { cn } from "@/lib/utils";
-import { formatDistanceToNow } from "date-fns";
-import { nb } from 'date-fns/locale';
+import Link from "next/link";
+import { useAuth } from "@/contexts/AuthContext";
+import { doc, deleteDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { toast } from "sonner";
 
-const ICONS = {
-  temperature: Thermometer,
-  moisture: Droplets,
-  weight: Weight,
-  ir: Ruler,
-  flow: CircleGauge,
-};
-
-type SensorCardProps = {
+interface SensorCardProps {
   sensor: Sensor;
-};
+}
 
 export default function SensorCard({ sensor }: SensorCardProps) {
-  const Icon = ICONS[sensor.type] || Thermometer;
-  
-  const statusColors = {
-    ok: "bg-green-500/20 text-green-700 border-green-500/30",
-    pending: "bg-yellow-500/20 text-yellow-700 border-yellow-500/30",
-    warning: "bg-orange-500/20 text-orange-700 border-orange-500/30",
-    critical: "bg-red-500/20 text-red-700 border-red-500/30",
-    offline: "bg-gray-500/20 text-gray-600 border-gray-500/30",
-  };
+  const { user } = useAuth();
+  const [deleting, setDeleting] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
-  const getStatusText = (status: string) => {
+  const getStatusVariant = (status: string) => {
     switch (status) {
-      case 'ok': return 'OK';
-      case 'pending': return 'Venter';
-      case 'warning': return 'Advarsel';
-      case 'critical': return 'Kritisk';
-      case 'offline': return 'Frakoblet';
-      default: return status;
+      case "ok":
+        return "default";
+      case "warning":
+        return "secondary";
+      case "critical":
+        return "destructive";
+      case "offline":
+      case "pending":
+        return "outline";
+      default:
+        return "outline";
     }
   };
 
-  const getLastCommunication = () => {
-    if (!sensor.lastCommunication) {
-      return 'Aldri';
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "ok":
+        return "text-green-600";
+      case "warning":
+        return "text-yellow-600";
+      case "critical":
+        return "text-red-600";
+      case "offline":
+      case "pending":
+        return "text-gray-600";
+      default:
+        return "text-gray-600";
     }
+  };
+
+  const getBatteryColor = (level: number) => {
+    if (level > 50) return "text-green-600";
+    if (level > 20) return "text-yellow-600";
+    return "text-red-600";
+  };
+
+  const handleDeleteSensor = async () => {
+    if (!user) return;
+
+    setDeleting(true);
     try {
-      // Handle Firestore Timestamp
-      const date = sensor.lastCommunication.toDate ? 
-        sensor.lastCommunication.toDate() : 
-        new Date(sensor.lastCommunication as any);
-      return formatDistanceToNow(date, { addSuffix: true, locale: nb });
+      await deleteDoc(doc(db, "users", user.uid, "sensors", sensor.id));
+      toast.success(`${sensor.name} er fjernet`);
+      setShowDeleteDialog(false);
     } catch (error) {
-      return 'Ukjent';
+      console.error("Error deleting sensor:", error);
+      toast.error("Kunne ikke fjerne sensor");
+    } finally {
+      setDeleting(false);
     }
   };
 
   return (
     <Card className="hover:shadow-lg transition-shadow">
-      <CardHeader className="flex flex-row items-start justify-between space-y-0">
-        <div className="grid gap-1">
-          <CardTitle className="flex items-center gap-2 font-headline text-lg">
-            <Icon className="h-5 w-5 text-muted-foreground" />
-            {sensor.name}
-          </CardTitle>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Thermometer className="h-5 w-5 text-muted-foreground" />
+            <CardTitle className="text-lg">{sensor.name}</CardTitle>
+          </div>
+          <div className="flex items-center gap-2">
+            <Badge variant={getStatusVariant(sensor.status)}>
+              {sensor.status === "ok" && "Normal"}
+              {sensor.status === "warning" && "Advarsel"}
+              {sensor.status === "critical" && "Kritisk"}
+              {sensor.status === "offline" && "Offline"}
+              {sensor.status === "pending" && "Venter"}
+            </Badge>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem asChild>
+                  <Link href={`/sensors/${sensor.id}`}>
+                    Vis detaljer
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="text-destructive"
+                  onClick={() => setShowDeleteDialog(true)}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Fjern sensor
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+      </CardHeader>
+
+      <CardContent className="space-y-4">
+        {/* Current Value */}
+        <div className="text-center py-4 border rounded-lg bg-muted/50">
+          <div className={cn("text-4xl font-bold", getStatusColor(sensor.status))}>
+            {sensor.currentValue} {sensor.unit}
+          </div>
+          <div className="text-sm text-muted-foreground mt-1">Nåværende verdi</div>
+        </div>
+
+        {/* Details */}
+        <div className="space-y-2 text-sm">
           {sensor.location && (
-            <CardDescription className="text-sm">{sensor.location}</CardDescription>
+            <div className="flex items-center gap-2">
+              <MapPin className="h-4 w-4 text-muted-foreground" />
+              <span className="text-muted-foreground">Plassering:</span>
+              <span className="font-medium">{sensor.location}</span>
+            </div>
+          )}
+
+          <div className="flex items-center gap-2">
+            <Battery className={cn("h-4 w-4", getBatteryColor(sensor.batteryLevel))} />
+            <span className="text-muted-foreground">Batteri:</span>
+            <span className={cn("font-medium", getBatteryColor(sensor.batteryLevel))}>
+              {sensor.batteryLevel}%
+            </span>
+          </div>
+
+          {sensor.signalStrength !== undefined && (
+            <div className="flex items-center gap-2">
+              <Wifi className="h-4 w-4 text-muted-foreground" />
+              <span className="text-muted-foreground">Signal:</span>
+              <span className="font-medium">{sensor.signalStrength}%</span>
+            </div>
+          )}
+
+          {sensor.lastCommunication && (
+            <div className="text-xs text-muted-foreground">
+              Sist oppdatert:{" "}
+              {format(
+                sensor.lastCommunication.toDate(),
+                "d. MMM yyyy HH:mm",
+                { locale: nb }
+              )}
+            </div>
           )}
         </div>
-        <Badge 
-          variant="outline" 
-          className={cn("text-xs font-medium", statusColors[sensor.status])}
-        >
-          {getStatusText(sensor.status)}
-        </Badge>
-      </CardHeader>
-      <CardContent className="grid gap-3">
-        {sensor.status === 'pending' ? (
-          <div className="flex flex-col items-center justify-center py-8 text-center">
-            <Clock className="h-12 w-12 text-muted-foreground/50 mb-3" />
-            <p className="text-sm text-muted-foreground">Venter på første melding...</p>
-          </div>
-        ) : sensor.status === 'offline' ? (
-          <div className="flex flex-col items-center justify-center py-8 text-center">
-            <WifiOff className="h-12 w-12 text-muted-foreground/50 mb-3" />
-            <p className="text-sm text-muted-foreground">Ingen kommunikasjon</p>
-            <p className="text-xs text-muted-foreground mt-1">Sist sett: {getLastCommunication()}</p>
-          </div>
-        ) : (
-          <>
-            <div className="flex items-baseline gap-2">
-              <div className="text-4xl font-bold">
-                {sensor.currentValue.toFixed(1)}
-              </div>
-              <span className="text-xl text-muted-foreground">{sensor.unit}</span>
-            </div>
-            
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <div>
-                <p className="text-muted-foreground text-xs">Batteri</p>
-                <p className="font-medium">{sensor.batteryLevel}%</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground text-xs">Sist oppdatert</p>
-                <p className="font-medium text-xs">{getLastCommunication()}</p>
-              </div>
-            </div>
 
-            {/* Threshold indicators */}
-            <div className="space-y-1">
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-muted-foreground">Terskler:</span>
-                <div className="flex gap-2">
-                  <span className={cn(
-                    "px-2 py-0.5 rounded",
-                    sensor.currentValue >= sensor.thresholds.warning 
-                      ? "bg-orange-500/20 text-orange-700" 
-                      : "bg-muted text-muted-foreground"
-                  )}>
-                    Advarsel: {sensor.thresholds.warning}
-                  </span>
-                  <span className={cn(
-                    "px-2 py-0.5 rounded",
-                    sensor.currentValue >= sensor.thresholds.critical 
-                      ? "bg-red-500/20 text-red-700" 
-                      : "bg-muted text-muted-foreground"
-                  )}>
-                    Kritisk: {sensor.thresholds.critical}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </>
-        )}
-      </CardContent>
-      <CardFooter>
-        <Button variant="outline" size="sm" className="w-full" asChild>
+        {/* Thresholds */}
+        <div className="space-y-2">
+          <div className="text-xs font-semibold text-muted-foreground">Terskler:</div>
+          <div className="flex gap-2">
+            <Badge variant="secondary" className="text-xs">
+              ⚠️ {sensor.thresholds.warning}
+            </Badge>
+            <Badge variant="destructive" className="text-xs">
+              🔴 {sensor.thresholds.critical}
+            </Badge>
+          </div>
+        </div>
+
+        {/* View Details Button */}
+        <Button variant="outline" className="w-full" asChild>
           <Link href={`/sensors/${sensor.id}`}>
-            Se detaljer <ArrowRight className="ml-2 h-4 w-4" />
+            Se detaljer
           </Link>
         </Button>
-      </CardFooter>
+      </CardContent>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Fjern sensor?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Er du sikker på at du vil fjerne <strong>{sensor.name}</strong>? 
+              Dette vil permanent slette all historikk og data for denne sensoren.
+              <br /><br />
+              <span className="text-destructive font-medium">
+                Denne handlingen kan ikke angres.
+              </span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Avbryt</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteSensor}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Fjern sensor
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }

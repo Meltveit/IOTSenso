@@ -1,10 +1,23 @@
-// components/buildings/BuildingCard.tsx
+// Filsti: src/components/buildings/BuildingCard.tsx
+
 "use client";
 
+import { useState } from "react";
 import { Building, Sensor } from "@/lib/types";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { 
   Home, 
   Building2, 
@@ -14,10 +27,16 @@ import {
   AlertCircle, 
   CheckCircle, 
   AlertTriangle,
-  WifiOff 
+  WifiOff,
+  Trash2,
+  Loader2
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
+import { doc, deleteDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { toast } from "sonner";
 
 interface BuildingCardProps {
   building: Building;
@@ -43,12 +62,16 @@ function getBuildingStatus(sensors: Sensor[]): { variant: "default" | "destructi
     return { variant: 'secondary', text: 'Advarsel' };
   }
   if (sensors.some(s => s.status === 'offline')) {
-    return { variant: 'secondary', text: 'Frakoblet' };
+    return { variant: 'secondary', text: 'Offline' };
   }
   return { variant: 'default', text: 'Normal' };
 }
 
 export default function BuildingCard({ building, sensors }: BuildingCardProps) {
+  const { user } = useAuth();
+  const [deleting, setDeleting] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+
   const Icon = buildingIcons[building.type || 'residential'];
   const status = getBuildingStatus(sensors);
   
@@ -56,6 +79,31 @@ export default function BuildingCard({ building, sensors }: BuildingCardProps) {
   const warningCount = sensors.filter(s => s.status === 'warning').length;
   const criticalCount = sensors.filter(s => s.status === 'critical').length;
   const offlineCount = sensors.filter(s => s.status === 'offline').length;
+
+  const handleDeleteBuilding = async () => {
+    if (!user) return;
+
+    // Sjekk om bygningen har sensorer
+    if (sensors.length > 0) {
+      toast.error(
+        `Kan ikke slette bygning med ${sensors.length} sensor${sensors.length > 1 ? 'er' : ''}. Fjern sensorene først.`
+      );
+      setShowDeleteDialog(false);
+      return;
+    }
+
+    setDeleting(true);
+    try {
+      await deleteDoc(doc(db, "users", user.uid, "buildings", building.id));
+      toast.success(`${building.name} er slettet`);
+      setShowDeleteDialog(false);
+    } catch (error) {
+      console.error("Error deleting building:", error);
+      toast.error("Kunne ikke slette bygning");
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   return (
     <Card className="hover:shadow-lg transition-shadow">
@@ -87,7 +135,7 @@ export default function BuildingCard({ building, sensors }: BuildingCardProps) {
           <div className="flex flex-col items-center p-3 bg-green-500/10 rounded-lg">
             <CheckCircle className="h-5 w-5 text-green-500 mb-1" />
             <span className="text-2xl font-bold">{activeCount}</span>
-            <span className="text-xs text-muted-foreground">Aktive</span>
+            <span className="text-xs text-muted-foreground">OK</span>
           </div>
           
           <div className="flex flex-col items-center p-3 bg-yellow-500/10 rounded-lg">
@@ -105,7 +153,7 @@ export default function BuildingCard({ building, sensors }: BuildingCardProps) {
           <div className="flex flex-col items-center p-3 bg-gray-500/10 rounded-lg">
             <WifiOff className="h-5 w-5 text-gray-500 mb-1" />
             <span className="text-2xl font-bold">{offlineCount}</span>
-            <span className="text-xs text-muted-foreground">Frakoblet</span>
+            <span className="text-xs text-muted-foreground">Offline</span>
           </div>
         </div>
 
@@ -145,11 +193,47 @@ export default function BuildingCard({ building, sensors }: BuildingCardProps) {
             Se detaljer
           </Link>
         </Button>
-        <Button className="flex-1" asChild>
+        <Button variant="outline" className="flex-1" asChild>
           <Link href={`/sensors?buildingId=${building.id}`}>
-            Administrer sensorer
+            Administrer
           </Link>
         </Button>
+        <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+          <AlertDialogTrigger asChild>
+            <Button variant="destructive" size="icon">
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Slett bygning?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Er du sikker på at du vil slette <strong>{building.name}</strong>?
+                {sensors.length > 0 ? (
+                  <span className="block mt-3 p-3 bg-destructive/10 border border-destructive rounded-lg text-destructive font-medium">
+                    ⚠️ Denne bygningen har {sensors.length} sensor{sensors.length > 1 ? 'er' : ''}. 
+                    Du må fjerne alle sensorer før du kan slette bygningen.
+                  </span>
+                ) : (
+                  <span className="block mt-3 text-destructive font-medium">
+                    Denne handlingen kan ikke angres.
+                  </span>
+                )}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={deleting}>Avbryt</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDeleteBuilding}
+                disabled={deleting || sensors.length > 0}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {deleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Slett bygning
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </CardFooter>
     </Card>
   );
