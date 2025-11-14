@@ -60,8 +60,8 @@ export default function AnalyticsClient({
   const warningAlerts = alerts.filter((a) => a.type === "warning").length;
 
   return (
-    <div className="flex flex-col gap-6">
-        <div className="grid gap-4 md:grid-cols-3">
+    <div className="container mx-auto p-6 space-y-6">
+        <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             <StatCard title="Totalt antall varsler (siste 7 dager)" value={totalAlerts} icon={Bell} />
             <StatCard title="Antall advarsler" value={warningAlerts} icon={ShieldCheck} />
             <StatCard title="Kritiske varsler" value={criticalAlerts} icon={AlertTriangle} variant="destructive" />
@@ -88,18 +88,16 @@ export default function AnalyticsClient({
           </div>
         </CardHeader>
         <CardContent>
-          <div className="h-80 w-full">
-            <ChartContainer config={chartConfig}>
-              <BarChart data={alertData}>
-                <CartesianGrid vertical={false} />
-                <XAxis dataKey="date" tickLine={false} axisLine={false} />
-                <YAxis tickLine={false} axisLine={false} />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <Legend />
-                <Bar dataKey="alerts" fill="var(--color-alerts)" radius={4} />
-              </BarChart>
-            </ChartContainer>
-          </div>
+          <ChartContainer config={chartConfig} className="h-[350px] w-full">
+            <BarChart data={alertData}>
+              <CartesianGrid vertical={false} />
+              <XAxis dataKey="date" tickLine={false} axisLine={false} tick={{ fontSize: 12 }} />
+              <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 12 }} />
+              <ChartTooltip content={<ChartTooltipContent />} />
+              <Legend />
+              <Bar dataKey="alerts" fill="var(--color-alerts)" radius={4} />
+            </BarChart>
+          </ChartContainer>
         </CardContent>
       </Card>
     </div>

@@ -87,7 +87,7 @@ export default function SensorsPage() {
         </div>
         <Button onClick={() => setShowAddModal(true)}>
           <Plus className="mr-2 h-4 w-4" />
-          Legg til ny sensor
+          {buildingId ? 'Legg til sensor' : 'Registrer ny sensor'}
         </Button>
       </div>
 
@@ -98,7 +98,7 @@ export default function SensorsPage() {
             <p className="text-sm mb-4">Klikk på knappen for å legge til din første sensor og starte overvåkingen.</p>
             <Button onClick={() => setShowAddModal(true)}>
               <Plus className="mr-2 h-4 w-4" />
-              Legg til første sensor
+              {buildingId ? 'Legg til første sensor' : 'Registrer første sensor'}
             </Button>
           </CardContent>
         </Card>

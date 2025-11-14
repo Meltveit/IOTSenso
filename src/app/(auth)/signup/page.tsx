@@ -21,6 +21,8 @@ import Link from 'next/link';
 import { AccountType, SignupFormData, PrivateUser, BusinessUser } from '@/lib/types';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import PrivacyPolicyModal from '@/components/legal/PrivacyPolicyModal';
+import TermsOfServiceModal from '@/components/legal/TermsOfServiceModal';
 
 export default function SignupPage() {
   const router = useRouter();
@@ -29,6 +31,8 @@ export default function SignupPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [accountType, setAccountType] = useState<AccountType>('private');
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
 
   const [formData, setFormData] = useState<Partial<SignupFormData>>({
     accountType: 'private',
@@ -388,13 +392,27 @@ export default function SignupPage() {
                 className="text-sm font-normal leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
               >
                 Jeg godtar SENSO sine{' '}
-                <Link href="/terms" className="underline hover:text-primary">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setShowTermsModal(true);
+                  }}
+                  className="underline hover:text-primary"
+                >
                   brukervilkår
-                </Link>{' '}
+                </button>{' '}
                 og{' '}
-                <Link href="/privacy" className="underline hover:text-primary">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setShowPrivacyModal(true);
+                  }}
+                  className="underline hover:text-primary"
+                >
                   personvernerklæring
-                </Link>
+                </button>
                 .
               </Label>
             </div>
@@ -420,6 +438,10 @@ export default function SignupPage() {
           </Link>
         </div>
       </CardFooter>
+
+      {/* Legal modals */}
+      <PrivacyPolicyModal open={showPrivacyModal} onOpenChange={setShowPrivacyModal} />
+      <TermsOfServiceModal open={showTermsModal} onOpenChange={setShowTermsModal} />
     </Card>
   );
 }

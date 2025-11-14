@@ -11,6 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -69,6 +70,11 @@ export default function AddSensorModal({
     type: 'idle' | 'checking' | 'available' | 'unavailable' | 'owned';
   }>({ valid: false, message: '', type: 'idle' });
 
+  // For linking existing sensors to building
+  const [unlinkedSensors, setUnlinkedSensors] = useState<any[]>([]);
+  const [selectedSensorId, setSelectedSensorId] = useState("");
+  const [activeTab, setActiveTab] = useState<string>(buildingId ? "link" : "register");
+
   const [formData, setFormData] = useState({
     sensorId: "",
     name: "",
@@ -80,8 +86,11 @@ export default function AddSensorModal({
   useEffect(() => {
     if (open && user) {
       checkSensorLimit();
+      if (buildingId) {
+        loadUnlinkedSensors();
+      }
     }
-  }, [open, user]);
+  }, [open, user, buildingId]);
 
   // Debounced sensor ID validation
   useEffect(() => {
@@ -96,6 +105,27 @@ export default function AddSensorModal({
 
     return () => clearTimeout(timer);
   }, [formData.sensorId]);
+
+  const loadUnlinkedSensors = async () => {
+    if (!user) return;
+
+    try {
+      // Hent alle sensorer som ikke er knyttet til noen bygning
+      const sensorsQuery = query(
+        collection(db, "users", user.uid, "sensors"),
+        where("buildingId", "==", null)
+      );
+      const sensorsSnapshot = await getDocs(sensorsQuery);
+      const sensors = sensorsSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setUnlinkedSensors(sensors);
+    } catch (error) {
+      console.error("Error loading unlinked sensors:", error);
+      toast.error("Kunne ikke laste sensorer");
+    }
+  };
 
   const checkSensorLimit = async () => {
     if (!user) return;
@@ -194,6 +224,28 @@ export default function AddSensorModal({
     }
   };
 
+  const handleLinkSensor = async () => {
+    if (!user || !selectedSensorId || !buildingId) return;
+
+    setLoading(true);
+    try {
+      const sensorRef = doc(db, "users", user.uid, "sensors", selectedSensorId);
+      await updateDoc(sensorRef, {
+        buildingId: buildingId,
+        updatedAt: Timestamp.now(),
+      });
+
+      toast.success("Sensor er nå knyttet til bygningen!");
+      setSelectedSensorId("");
+      onOpenChange(false);
+    } catch (error) {
+      console.error("Error linking sensor:", error);
+      toast.error("Kunne ikke knytte sensor til bygning");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
@@ -287,9 +339,13 @@ export default function AddSensorModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Legg til ny sensor</DialogTitle>
+          <DialogTitle>
+            {buildingId ? "Legg til sensor" : "Registrer ny sensor"}
+          </DialogTitle>
           <DialogDescription>
-            Registrer en ny sensor for overvåking
+            {buildingId
+              ? "Knytt en eksisterende sensor eller registrer en ny"
+              : "Registrer en ny sensor for overvåking"}
           </DialogDescription>
         </DialogHeader>
 
@@ -327,13 +383,76 @@ export default function AddSensorModal({
               </Button>
             </div>
           </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <Alert>
-              <AlertDescription>
-                Du har {availableSlots} ledig{availableSlots !== 1 ? 'e' : ''} sensorplass{availableSlots !== 1 ? 'er' : ''} ({limitInfo.current}/{limitInfo.max} brukt)
-              </AlertDescription>
-            </Alert>
+        ) : buildingId ? (
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="link">Knytt eksisterende</TabsTrigger>
+              <TabsTrigger value="register">Registrer ny</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="link" className="space-y-4 mt-4">
+              {unlinkedSensors.length === 0 ? (
+                <Alert>
+                  <AlertDescription>
+                    Du har ingen sensorer som ikke er knyttet til en bygning. Registrer en ny sensor eller fjern en sensor fra en annen bygning først.
+                  </AlertDescription>
+                </Alert>
+              ) : (
+                <div className="space-y-4">
+                  <Alert>
+                    <AlertDescription>
+                      Velg en sensor fra listen nedenfor for å knytte den til denne bygningen.
+                    </AlertDescription>
+                  </Alert>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="existingSensor">Velg sensor</Label>
+                    <Select value={selectedSensorId} onValueChange={setSelectedSensorId}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Velg en sensor..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {unlinkedSensors.map((sensor) => (
+                          <SelectItem key={sensor.id} value={sensor.id}>
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium">{sensor.name}</span>
+                              <span className="text-xs text-muted-foreground">
+                                ({SENSOR_TYPE_LABELS[sensor.type as SensorType]})
+                              </span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <DialogFooter>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => onOpenChange(false)}
+                    >
+                      Avbryt
+                    </Button>
+                    <Button
+                      onClick={handleLinkSensor}
+                      disabled={!selectedSensorId || loading}
+                    >
+                      {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      Knytt sensor
+                    </Button>
+                  </DialogFooter>
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="register" className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <Alert>
+                  <AlertDescription>
+                    Du har {availableSlots} ledig{availableSlots !== 1 ? 'e' : ''} sensorplass{availableSlots !== 1 ? 'er' : ''} ({limitInfo.current}/{limitInfo.max} brukt)
+                  </AlertDescription>
+                </Alert>
 
             <div className="space-y-2">
               <Label htmlFor="sensorId">Sensor-ID *</Label>
@@ -400,27 +519,160 @@ export default function AddSensorModal({
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="temp_humidity">
-                    <div className="py-2">
+                <SelectContent className="max-w-md">
+                  <SelectItem value="temp_humidity" className="py-3">
+                    <div className="flex flex-col gap-1">
                       <div className="font-medium">{SENSOR_TYPE_LABELS.temp_humidity}</div>
-                      <div className="text-xs text-muted-foreground">
+                      <div className="text-xs text-muted-foreground whitespace-normal">
                         {SENSOR_TYPE_DESCRIPTIONS.temp_humidity}
                       </div>
                     </div>
                   </SelectItem>
-                  <SelectItem value="water_weight">
-                    <div className="py-2">
+                  <SelectItem value="water_weight" className="py-3">
+                    <div className="flex flex-col gap-1">
                       <div className="font-medium">{SENSOR_TYPE_LABELS.water_weight}</div>
-                      <div className="text-xs text-muted-foreground">
+                      <div className="text-xs text-muted-foreground whitespace-normal">
                         {SENSOR_TYPE_DESCRIPTIONS.water_weight}
                       </div>
                     </div>
                   </SelectItem>
-                  <SelectItem value="weight_temp">
-                    <div className="py-2">
+                  <SelectItem value="weight_temp" className="py-3">
+                    <div className="flex flex-col gap-1">
                       <div className="font-medium">{SENSOR_TYPE_LABELS.weight_temp}</div>
-                      <div className="text-xs text-muted-foreground">
+                      <div className="text-xs text-muted-foreground whitespace-normal">
+                        {SENSOR_TYPE_DESCRIPTIONS.weight_temp}
+                      </div>
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="location">Plassering (valgfritt)</Label>
+              <Input
+                id="location"
+                placeholder="F.eks. Soverom"
+                value={formData.location}
+                onChange={(e) =>
+                  setFormData({ ...formData, location: e.target.value })
+                }
+              />
+            </div>
+
+                <DialogFooter>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => onOpenChange(false)}
+                  >
+                    Avbryt
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={loading || !sensorIdStatus.valid || checkingSensorId}
+                  >
+                    {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Registrer sensor
+                  </Button>
+                </DialogFooter>
+              </form>
+            </TabsContent>
+          </Tabs>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <Alert>
+              <AlertDescription>
+                Du har {availableSlots} ledig{availableSlots !== 1 ? 'e' : ''} sensorplass{availableSlots !== 1 ? 'er' : ''} ({limitInfo.current}/{limitInfo.max} brukt)
+              </AlertDescription>
+            </Alert>
+
+            <div className="space-y-2">
+              <Label htmlFor="sensorId">Sensor-ID *</Label>
+              <Input
+                id="sensorId"
+                placeholder="F.eks. SG-001"
+                value={formData.sensorId}
+                onChange={(e) =>
+                  setFormData({ ...formData, sensorId: e.target.value })
+                }
+                required
+              />
+
+              {/* Sensor ID Validation Status */}
+              {sensorIdStatus.type !== 'idle' && (
+                <div className="flex items-center gap-2 text-sm">
+                  {sensorIdStatus.type === 'checking' && (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                      <span className="text-muted-foreground">{sensorIdStatus.message}</span>
+                    </>
+                  )}
+                  {sensorIdStatus.type === 'available' && (
+                    <>
+                      <CheckCircle2 className="h-4 w-4 text-green-600" />
+                      <span className="text-green-600">{sensorIdStatus.message}</span>
+                    </>
+                  )}
+                  {(sensorIdStatus.type === 'unavailable' || sensorIdStatus.type === 'owned') && (
+                    <>
+                      <AlertCircle className="h-4 w-4 text-destructive" />
+                      <span className="text-destructive">{sensorIdStatus.message}</span>
+                    </>
+                  )}
+                </div>
+              )}
+
+              <p className="text-xs text-muted-foreground">
+                Unik identifikator for sensoren (finnes på sensoren)
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="name">Sensornavn *</Label>
+              <Input
+                id="name"
+                placeholder="F.eks. Stue sensor"
+                value={formData.name}
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="type">Sensortype *</Label>
+              <Select
+                value={formData.type}
+                onValueChange={(value: SensorType) =>
+                  setFormData({ ...formData, type: value })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="max-w-md">
+                  <SelectItem value="temp_humidity" className="py-3">
+                    <div className="flex flex-col gap-1">
+                      <div className="font-medium">{SENSOR_TYPE_LABELS.temp_humidity}</div>
+                      <div className="text-xs text-muted-foreground whitespace-normal">
+                        {SENSOR_TYPE_DESCRIPTIONS.temp_humidity}
+                      </div>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="water_weight" className="py-3">
+                    <div className="flex flex-col gap-1">
+                      <div className="font-medium">{SENSOR_TYPE_LABELS.water_weight}</div>
+                      <div className="text-xs text-muted-foreground whitespace-normal">
+                        {SENSOR_TYPE_DESCRIPTIONS.water_weight}
+                      </div>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="weight_temp" className="py-3">
+                    <div className="flex flex-col gap-1">
+                      <div className="font-medium">{SENSOR_TYPE_LABELS.weight_temp}</div>
+                      <div className="text-xs text-muted-foreground whitespace-normal">
                         {SENSOR_TYPE_DESCRIPTIONS.weight_temp}
                       </div>
                     </div>
@@ -449,12 +701,12 @@ export default function AddSensorModal({
               >
                 Avbryt
               </Button>
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 disabled={loading || !sensorIdStatus.valid || checkingSensorId}
               >
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Legg til sensor
+                Registrer sensor
               </Button>
             </DialogFooter>
           </form>

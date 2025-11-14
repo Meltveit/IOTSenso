@@ -147,6 +147,8 @@ export interface Sensor {
   status: SensorStatus;
   currentValue: number;
   humidityValue?: number;  // For temp_humidity sensors
+  weightValue?: number;  // For water_weight and weight_temp sensors
+  temperatureValue?: number;  // For weight_temp sensors (secondary temp reading)
   unit: string;
   createdAt: Timestamp;
   updatedAt: Timestamp;
@@ -158,6 +160,8 @@ export interface Sensor {
 export interface SensorReading {
   value: number;
   humidityValue?: number;  // For temp_humidity sensors
+  weightValue?: number;  // For water_weight and weight_temp sensors
+  temperatureValue?: number;  // For weight_temp sensors (secondary temp reading)
   unit: string;
   timestamp: Date | Timestamp;
   batteryLevel: number;

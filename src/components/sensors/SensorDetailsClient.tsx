@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   ChartContainer,
   ChartTooltip,
@@ -45,6 +46,18 @@ const chartConfig = {
   value: {
     label: "Verdi",
     color: "hsl(var(--chart-1))",
+  },
+  humidityValue: {
+    label: "Fuktighet",
+    color: "hsl(var(--chart-5))",
+  },
+  weightValue: {
+    label: "Vekt",
+    color: "hsl(var(--chart-2))",
+  },
+  temperatureValue: {
+    label: "Temperatur",
+    color: "hsl(var(--chart-3))",
   },
   upper: {
     label: "Øvre grense",
@@ -77,6 +90,14 @@ export default function SensorDetailsClient({
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<PredictiveMaintenanceOutput | null>(null);
+
+  // State for toggling chart lines visibility
+  const [visibleLines, setVisibleLines] = useState({
+    value: true,
+    humidityValue: true,
+    weightValue: true,
+    temperatureValue: true,
+  });
 
   // Oppdater sensor state når initialSensor endres (real-time updates)
   useEffect(() => {
@@ -187,15 +208,50 @@ export default function SensorDetailsClient({
     }
   };
 
+  // Determine available measurements based on sensor type
+  const getMeasurements = () => {
+    const measurements: Array<{ key: string; label: string; unit: string }> = [];
+
+    switch (sensor.type) {
+      case 'temp_humidity':
+        measurements.push(
+          { key: 'value', label: 'Temperatur', unit: '°C' },
+          { key: 'humidityValue', label: 'Fuktighet', unit: '%' }
+        );
+        break;
+      case 'water_weight':
+        measurements.push(
+          { key: 'value', label: 'Vann', unit: 'L' },
+          { key: 'weightValue', label: 'Vekt', unit: 'kg' }
+        );
+        break;
+      case 'weight_temp':
+        measurements.push(
+          { key: 'value', label: 'Vekt', unit: 'kg' },
+          { key: 'temperatureValue', label: 'Temperatur', unit: '°C' }
+        );
+        break;
+      default:
+        measurements.push({ key: 'value', label: 'Verdi', unit: sensor.unit });
+    }
+
+    return measurements;
+  };
+
+  const availableMeasurements = getMeasurements();
+
   // Formater data for grafen
   const chartData = sensor.data?.map(reading => ({
-    timestamp: reading.timestamp instanceof Date 
-      ? reading.timestamp.getTime() 
+    timestamp: reading.timestamp instanceof Date
+      ? reading.timestamp.getTime()
       : reading.timestamp?.toDate?.().getTime() || Date.now(),
     value: reading.value,
+    humidityValue: reading.humidityValue,
+    weightValue: reading.weightValue,
+    temperatureValue: reading.temperatureValue,
     formattedTime: format(
-      reading.timestamp instanceof Date 
-        ? reading.timestamp 
+      reading.timestamp instanceof Date
+        ? reading.timestamp
         : reading.timestamp?.toDate?.() || new Date(),
       "dd.MM HH:mm"
     ),
@@ -228,6 +284,24 @@ export default function SensorDetailsClient({
                     {sensor.humidityValue.toFixed(1)}%
                   </div>
                   <div className="text-sm text-muted-foreground mt-1">Fuktighet</div>
+                </div>
+              )}
+
+              {sensor.weightValue !== undefined && sensor.type === 'water_weight' && (
+                <div className="mt-4 pt-4 border-t">
+                  <div className="text-3xl font-bold font-headline text-green-600">
+                    {sensor.weightValue.toFixed(1)} kg
+                  </div>
+                  <div className="text-sm text-muted-foreground mt-1">Vekt</div>
+                </div>
+              )}
+
+              {sensor.temperatureValue !== undefined && sensor.type === 'weight_temp' && (
+                <div className="mt-4 pt-4 border-t">
+                  <div className="text-3xl font-bold font-headline text-orange-600">
+                    {sensor.temperatureValue.toFixed(1)}°C
+                  </div>
+                  <div className="text-sm text-muted-foreground mt-1">Temperatur</div>
                 </div>
               )}
             </div>
@@ -295,8 +369,36 @@ export default function SensorDetailsClient({
         {/* Chart Card */}
         <Card>
           <CardHeader>
-            <CardTitle className="font-headline">Historisk data</CardTitle>
-            <CardDescription>Siste 50 målinger</CardDescription>
+            <div className="flex items-start justify-between">
+              <div>
+                <CardTitle className="font-headline">Historisk data</CardTitle>
+                <CardDescription>Siste 50 målinger</CardDescription>
+              </div>
+              {availableMeasurements.length > 1 && (
+                <div className="flex flex-col gap-2">
+                  {availableMeasurements.map((measurement) => (
+                    <div key={measurement.key} className="flex items-center gap-2">
+                      <Checkbox
+                        id={`toggle-${measurement.key}`}
+                        checked={visibleLines[measurement.key as keyof typeof visibleLines]}
+                        onCheckedChange={(checked) =>
+                          setVisibleLines((prev) => ({
+                            ...prev,
+                            [measurement.key]: checked === true,
+                          }))
+                        }
+                      />
+                      <label
+                        htmlFor={`toggle-${measurement.key}`}
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                      >
+                        {measurement.label}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </CardHeader>
           <CardContent>
             <ChartContainer config={chartConfig} className="h-[350px] w-full">
@@ -306,6 +408,18 @@ export default function SensorDetailsClient({
                     <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="hsl(var(--chart-1))" stopOpacity={0.3} />
                       <stop offset="95%" stopColor="hsl(var(--chart-1))" stopOpacity={0} />
+                    </linearGradient>
+                    <linearGradient id="colorHumidity" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="hsl(var(--chart-5))" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="hsl(var(--chart-5))" stopOpacity={0} />
+                    </linearGradient>
+                    <linearGradient id="colorWeight" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="hsl(var(--chart-2))" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="hsl(var(--chart-2))" stopOpacity={0} />
+                    </linearGradient>
+                    <linearGradient id="colorTemperature" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="hsl(var(--chart-3))" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="hsl(var(--chart-3))" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
@@ -319,7 +433,7 @@ export default function SensorDetailsClient({
                     tick={{ fontSize: 12 }}
                     tickLine={false}
                     axisLine={false}
-                    domain={['dataMin - 5', 'dataMax + 5']}
+                    domain={['auto', 'auto']}
                   />
                   <ChartTooltip content={<ChartTooltipContent />} />
                   
@@ -354,15 +468,52 @@ export default function SensorDetailsClient({
                     strokeWidth={2}
                     label={{ value: `Kritisk: ${sensor.thresholds.critical}`, position: "right", fill: "hsl(var(--destructive))" }}
                   />
-                  
-                  <Area
-                    type="monotone"
-                    dataKey="value"
-                    stroke="hsl(var(--chart-1))"
-                    strokeWidth={2}
-                    fill="url(#colorValue)"
-                    animationDuration={1000}
-                  />
+
+                  {/* Render Area components for each visible measurement */}
+                  {visibleLines.value && (
+                    <Area
+                      type="monotone"
+                      dataKey="value"
+                      stroke="hsl(var(--chart-1))"
+                      strokeWidth={2}
+                      fill="url(#colorValue)"
+                      animationDuration={1000}
+                      name={availableMeasurements.find(m => m.key === 'value')?.label || 'Verdi'}
+                    />
+                  )}
+                  {visibleLines.humidityValue && sensor.type === 'temp_humidity' && (
+                    <Area
+                      type="monotone"
+                      dataKey="humidityValue"
+                      stroke="hsl(var(--chart-5))"
+                      strokeWidth={2}
+                      fill="url(#colorHumidity)"
+                      animationDuration={1000}
+                      name="Fuktighet"
+                    />
+                  )}
+                  {visibleLines.weightValue && sensor.type === 'water_weight' && (
+                    <Area
+                      type="monotone"
+                      dataKey="weightValue"
+                      stroke="hsl(var(--chart-2))"
+                      strokeWidth={2}
+                      fill="url(#colorWeight)"
+                      animationDuration={1000}
+                      name="Vekt"
+                    />
+                  )}
+                  {visibleLines.temperatureValue && sensor.type === 'weight_temp' && (
+                    <Area
+                      type="monotone"
+                      dataKey="temperatureValue"
+                      stroke="hsl(var(--chart-3))"
+                      strokeWidth={2}
+                      fill="url(#colorTemperature)"
+                      animationDuration={1000}
+                      name="Temperatur"
+                    />
+                  )}
                 </AreaChart>
               </ResponsiveContainer>
             </ChartContainer>

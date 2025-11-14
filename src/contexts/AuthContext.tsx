@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
 import {
   User as FirebaseUser,
   onAuthStateChanged,
@@ -13,6 +13,7 @@ import { doc, getDoc, setDoc, Timestamp } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { User } from '@/lib/types';
 import { Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface AuthContextType {
   user: FirebaseUser | null;
@@ -26,11 +27,15 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Auto-logout timeout (30 minutes in milliseconds)
+const INACTIVITY_TIMEOUT = 30 * 60 * 1000; // 30 minutes
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [userData, setUserData] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
+  const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -68,6 +73,49 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return unsubscribe;
   }, [mounted]);
+
+  // Auto-logout on inactivity
+  useEffect(() => {
+    if (!user || !mounted) return;
+
+    const resetInactivityTimer = () => {
+      // Clear existing timer
+      if (inactivityTimerRef.current) {
+        clearTimeout(inactivityTimerRef.current);
+      }
+
+      // Set new timer
+      inactivityTimerRef.current = setTimeout(async () => {
+        // Log out user after inactivity
+        await firebaseSignOut(auth);
+        toast.error('Du har blitt logget ut på grunn av inaktivitet', {
+          description: 'Vennligst logg inn på nytt for å fortsette.',
+          duration: 6000,
+        });
+      }, INACTIVITY_TIMEOUT);
+    };
+
+    // Events that indicate user activity
+    const events = ['mousedown', 'keydown', 'scroll', 'touchstart', 'click'];
+
+    // Reset timer on any user activity
+    events.forEach((event) => {
+      window.addEventListener(event, resetInactivityTimer);
+    });
+
+    // Initialize timer
+    resetInactivityTimer();
+
+    // Cleanup
+    return () => {
+      events.forEach((event) => {
+        window.removeEventListener(event, resetInactivityTimer);
+      });
+      if (inactivityTimerRef.current) {
+        clearTimeout(inactivityTimerRef.current);
+      }
+    };
+  }, [user, mounted]);
 
   const login = async (email: string, password: string) => {
     await signInWithEmailAndPassword(auth, email, password);

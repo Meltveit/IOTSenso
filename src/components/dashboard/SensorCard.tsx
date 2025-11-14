@@ -23,14 +23,15 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { 
-  Thermometer, 
-  Wifi, 
-  Battery, 
-  MapPin, 
-  MoreVertical, 
+import {
+  Thermometer,
+  Wifi,
+  Battery,
+  MapPin,
+  MoreVertical,
   Trash2,
-  Loader2
+  Loader2,
+  Link2Off
 } from "lucide-react";
 import { format } from "date-fns";
 import { nb } from "date-fns/locale";
@@ -49,6 +50,8 @@ export default function SensorCard({ sensor }: SensorCardProps) {
   const { user } = useAuth();
   const [deleting, setDeleting] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showRemoveFromBuildingDialog, setShowRemoveFromBuildingDialog] = useState(false);
+  const [removingFromBuilding, setRemovingFromBuilding] = useState(false);
 
   const getStatusVariant = (status: string) => {
     switch (status) {
@@ -136,6 +139,27 @@ export default function SensorCard({ sensor }: SensorCardProps) {
     }
   };
 
+  const handleRemoveFromBuilding = async () => {
+    if (!user) return;
+
+    setRemovingFromBuilding(true);
+    try {
+      const sensorRef = doc(db, "users", user.uid, "sensors", sensor.id);
+      await updateDoc(sensorRef, {
+        buildingId: null,
+        updatedAt: Timestamp.now(),
+      });
+
+      toast.success(`${sensor.name} er fjernet fra bygningen`);
+      setShowRemoveFromBuildingDialog(false);
+    } catch (error) {
+      console.error("Error removing sensor from building:", error);
+      toast.error("Kunne ikke fjerne sensor fra bygning");
+    } finally {
+      setRemovingFromBuilding(false);
+    }
+  };
+
   const sensorTypeLabel = SENSOR_TYPE_LABELS[sensor.type] || sensor.type;
 
   return (
@@ -170,6 +194,14 @@ export default function SensorCard({ sensor }: SensorCardProps) {
                       Vis detaljer
                     </Link>
                   </DropdownMenuItem>
+                  {sensor.buildingId && (
+                    <DropdownMenuItem
+                      onClick={() => setShowRemoveFromBuildingDialog(true)}
+                    >
+                      <Link2Off className="mr-2 h-4 w-4" />
+                      Fjern fra bygning
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuItem
                     className="text-destructive"
                     onClick={() => setShowDeleteDialog(true)}
@@ -308,6 +340,42 @@ export default function SensorCard({ sensor }: SensorCardProps) {
             >
               {deleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Fjern sensor
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Remove from Building Confirmation Dialog */}
+      <AlertDialog open={showRemoveFromBuildingDialog} onOpenChange={setShowRemoveFromBuildingDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Fjern sensor fra bygning?</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-3">
+              <p>
+                Er du sikker på at du vil fjerne <strong>{sensor.name}</strong> fra bygningen?
+              </p>
+
+              <div className="p-3 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg">
+                <p className="text-sm font-semibold text-blue-900 dark:text-blue-100">
+                  ℹ️ Dette vil skje:
+                </p>
+                <ul className="text-sm text-blue-800 dark:text-blue-200 mt-2 space-y-1 list-disc list-inside">
+                  <li>Sensoren blir fjernet fra bygningen</li>
+                  <li>All sensordata og historikk blir bevart</li>
+                  <li>Du kan knytte sensoren til en annen bygning senere</li>
+                  <li>Sensoren vil fortsatt være synlig under "Dine sensorer"</li>
+                </ul>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={removingFromBuilding}>Avbryt</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleRemoveFromBuilding}
+              disabled={removingFromBuilding}
+            >
+              {removingFromBuilding && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Fjern fra bygning
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
