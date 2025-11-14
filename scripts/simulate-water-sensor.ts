@@ -2,9 +2,9 @@ import 'dotenv/config';
 import mqtt from 'mqtt';
 
 // --- Configuration ---
-const SENSOR_ID = 'WATR9740FFFE10B22C'; // Fake Water Measurement Sensor DevEUI
+const SENSOR_ID = 'WATR9740FFFE10B22C'; // Fake Water & Weight Sensor DevEUI
 const TOPIC = `sensors/${SENSOR_ID}/data`;
-const SEND_INTERVAL_MS = 60000; // 60 seconds
+const SEND_INTERVAL_MS = 400000; // 5 Min
 // ---------------------
 
 const options: mqtt.IClientOptions = {
@@ -15,14 +15,14 @@ const options: mqtt.IClientOptions = {
   password: process.env.HIVEMQ_PASSWORD,
 };
 
-console.log('--- Water Measurement Sensor Simulator ---');
+console.log('--- Water & Weight Sensor Simulator ---');
 console.log(`Sensor ID: ${SENSOR_ID}`);
 console.log(`Attempting to connect to: ${process.env.HIVEMQ_URL}:${process.env.HIVEMQ_PORT}`);
 
 const client = mqtt.connect(options);
 
 client.on('connect', () => {
-  console.log('✅ Water Measurement Simulator connected to HiveMQ!');
+  console.log('✅ Water & Weight Simulator connected to HiveMQ!');
   console.log(`📡 Publishing to topic: ${TOPIC}`);
   console.log(`⏱️  Interval: ${SEND_INTERVAL_MS / 1000} seconds\n`);
 
@@ -34,13 +34,13 @@ client.on('connect', () => {
 });
 
 function sendData() {
-  // Simulate realistic water volume in liters (0-1000 L)
-  // For water tank monitoring, reservoir level, etc.
-  const water = parseFloat((Math.random() * 1000).toFixed(2));
+  // Simulate realistic water height in centimeters (0-15 cm)
+  // For measuring water level on roofs, flood detection, etc.
+  const water = parseFloat((Math.random() * 15).toFixed(2));
 
-  // Calculate weight based on water density (1 kg per liter)
-  // Add some variation to simulate container weight
-  const weight = parseFloat((water + (20 + Math.random() * 30)).toFixed(2));
+  // Simulate snow weight per square meter (0-75 kg/m²)
+  // Weight varies independently from water level
+  const weight = parseFloat((Math.random() * 75).toFixed(2));
 
   const batteryLevel = parseFloat((85 + Math.random() * 15).toFixed(1)); // 85-100%
 
@@ -57,7 +57,7 @@ function sendData() {
     if (err) {
       console.error('❌ Failed to publish:', err.message);
     } else {
-      console.log(`📤 [${new Date().toLocaleTimeString()}] Sent: Water: ${water} L, Weight: ${weight} kg, Battery: ${batteryLevel}%`);
+      console.log(`📤 [${new Date().toLocaleTimeString()}] Sent: Water: ${water} cm, Weight: ${weight} kg, Battery: ${batteryLevel}%`);
     }
   });
 }

@@ -44,19 +44,34 @@ export function connectMqtt() {
       // Extract sensor ID from topic (sensors/{sensorId}/data)
       const sensorPhysicalId = topic.split('/')[1];
 
-      // Support both old format (payload.value) and new format (payload.temperature + payload.humidity)
+      // Support multiple payload formats:
+      // - Old format: { value, battery }
+      // - Temp+Humidity: { temperature, humidity, battery }
+      // - Water+Weight: { water, weight, battery }
+      // - CO2+Humidity: { co2, humidity, battery }
       let value: number;
       let humidity: number | undefined;
+      let weight: number | undefined;
+      let co2: number | undefined;
 
       if (typeof payload.value === 'number') {
         // Old format: single value
         value = payload.value;
       } else if (typeof payload.temperature === 'number') {
-        // New format: temperature and humidity
+        // Temp+Humidity format
         value = payload.temperature;
         humidity = payload.humidity;
+      } else if (typeof payload.water === 'number') {
+        // Water+Weight format (water level + snow weight)
+        value = payload.water;
+        weight = payload.weight;
+      } else if (typeof payload.co2 === 'number') {
+        // CO2+Humidity format
+        value = payload.co2;
+        co2 = payload.co2;  // Store CO2 separately
+        humidity = payload.humidity;
       } else {
-        console.warn('⚠️  Invalid payload format: no value or temperature field');
+        console.warn('⚠️  Invalid payload format: no recognized value field');
         return;
       }
 
@@ -115,9 +130,15 @@ export function connectMqtt() {
           status: status,
         };
 
-        // Add humidity if present (for temp_humidity sensors)
+        // Add secondary values based on sensor type
         if (humidity !== undefined) {
           updateData.humidityValue = humidity;
+        }
+        if (weight !== undefined) {
+          updateData.weightValue = weight;
+        }
+        if (co2 !== undefined) {
+          updateData.co2Value = co2;
         }
 
         await doc.ref.update(updateData);
@@ -129,9 +150,15 @@ export function connectMqtt() {
           batteryLevel: battery || 0
         };
 
-        // Add humidity if present
+        // Add secondary values to reading
         if (humidity !== undefined) {
           readingData.humidityValue = humidity;
+        }
+        if (weight !== undefined) {
+          readingData.weightValue = weight;
+        }
+        if (co2 !== undefined) {
+          readingData.co2Value = co2;
         }
 
         await doc.ref.collection('readings').add(readingData);
@@ -174,6 +201,12 @@ export function connectMqtt() {
         console.log(`   Value: ${value}${sensorData.unit}`);
         if (humidity !== undefined) {
           console.log(`   Humidity: ${humidity}%`);
+        }
+        if (weight !== undefined) {
+          console.log(`   Weight: ${weight} kg`);
+        }
+        if (co2 !== undefined) {
+          console.log(`   CO2: ${co2} ppm`);
         }
         console.log(`   Battery: ${battery}%`);
       }

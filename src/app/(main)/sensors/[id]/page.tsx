@@ -45,6 +45,9 @@ export default function SensorDetailPage() {
           return {
             value: data.value,
             humidityValue: data.humidityValue,
+            weightValue: data.weightValue,
+            temperatureValue: data.temperatureValue,
+            co2Value: data.co2Value,
             timestamp: data.timestamp?.toDate?.() || new Date(),
           };
         }).reverse(); // Reverse to show oldest first in chart

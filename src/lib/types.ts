@@ -96,7 +96,7 @@ export interface Building {
 // SENSOR TYPES - OPPDATERT MED UPPER/LOWER THRESHOLDS
 // ============================================
 
-export type SensorType = 'temp_humidity' | 'water_weight' | 'weight_temp';
+export type SensorType = 'temp_humidity' | 'water_weight' | 'weight_temp' | 'co2_humidity';
 export type SensorStatus = 'ok' | 'warning' | 'critical' | 'offline' | 'pending';
 
 // Display names for sensortyper
@@ -104,19 +104,22 @@ export const SENSOR_TYPE_LABELS: Record<SensorType, string> = {
   temp_humidity: 'Temperatur & Fukt',
   water_weight: 'Vannmåler & Vekt',
   weight_temp: 'Vekt & Temperatur',
+  co2_humidity: 'CO2 & Luftkvalitet',
 };
 
 export const SENSOR_TYPE_DESCRIPTIONS: Record<SensorType, string> = {
   temp_humidity: 'Kombinert sensor for temperatur og luftfuktighet',
-  water_weight: 'Vannmåler med vektsensor for presist forbruk',
+  water_weight: 'Måler vannstand (høyde) og snøvekt på tak eller utendørs',
   weight_temp: 'Vektsensor med temperaturmåling',
+  co2_humidity: 'CO2-sensor for luftkvalitet og fuktighet',
 };
 
 // Units for hver sensortype (første verdi er primary)
 export const SENSOR_UNITS: Record<SensorType, string[]> = {
   temp_humidity: ['°C', '%'],
-  water_weight: ['L', 'kg'],
+  water_weight: ['cm', 'kg'],
   weight_temp: ['kg', '°C'],
+  co2_humidity: ['ppm', '%'],
 };
 
 // Icons for hver sensortype
@@ -124,6 +127,7 @@ export const SENSOR_TYPE_ICONS: Record<SensorType, string> = {
   temp_humidity: 'thermometer',
   water_weight: 'droplet',
   weight_temp: 'weight',
+  co2_humidity: 'wind',
 };
 
 export interface Sensor {
@@ -146,9 +150,10 @@ export interface Sensor {
   lastCommunication: Timestamp | null;
   status: SensorStatus;
   currentValue: number;
-  humidityValue?: number;  // For temp_humidity sensors
+  humidityValue?: number;  // For temp_humidity and co2_humidity sensors
   weightValue?: number;  // For water_weight and weight_temp sensors
   temperatureValue?: number;  // For weight_temp sensors (secondary temp reading)
+  co2Value?: number;  // For co2_humidity sensors
   unit: string;
   createdAt: Timestamp;
   updatedAt: Timestamp;
@@ -159,9 +164,10 @@ export interface Sensor {
 
 export interface SensorReading {
   value: number;
-  humidityValue?: number;  // For temp_humidity sensors
+  humidityValue?: number;  // For temp_humidity and co2_humidity sensors
   weightValue?: number;  // For water_weight and weight_temp sensors
   temperatureValue?: number;  // For weight_temp sensors (secondary temp reading)
+  co2Value?: number;  // For co2_humidity sensors
   unit: string;
   timestamp: Date | Timestamp;
   batteryLevel: number;
@@ -194,7 +200,7 @@ export interface Alert {
 // ============================================
 
 // Product category types (for marketing/sales)
-export type ProductCategory = 'weight' | 'ir' | 'moisture' | 'flow' | 'temp_humidity' | 'water_weight' | 'weight_temp';
+export type ProductCategory = 'weight' | 'ir' | 'moisture' | 'flow' | 'temp_humidity' | 'water_weight' | 'weight_temp' | 'co2_humidity';
 
 export interface SensorProduct {
   id: string;

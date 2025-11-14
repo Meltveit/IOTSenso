@@ -4,7 +4,7 @@ import mqtt from 'mqtt';
 // --- Configuration ---
 const SENSOR_ID = 'CO2A9740FFFE10C33D'; // Fake CO2 Sensor DevEUI
 const TOPIC = `sensors/${SENSOR_ID}/data`;
-const SEND_INTERVAL_MS = 60000; // 60 seconds
+const SEND_INTERVAL_MS = 600000; // 600 seconds
 // ---------------------
 
 const options: mqtt.IClientOptions = {

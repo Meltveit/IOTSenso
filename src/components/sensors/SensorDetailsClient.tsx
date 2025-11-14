@@ -221,7 +221,7 @@ export default function SensorDetailsClient({
         break;
       case 'water_weight':
         measurements.push(
-          { key: 'value', label: 'Vann', unit: 'L' },
+          { key: 'value', label: 'Vannstand', unit: 'cm' },
           { key: 'weightValue', label: 'Vekt', unit: 'kg' }
         );
         break;
@@ -229,6 +229,12 @@ export default function SensorDetailsClient({
         measurements.push(
           { key: 'value', label: 'Vekt', unit: 'kg' },
           { key: 'temperatureValue', label: 'Temperatur', unit: '°C' }
+        );
+        break;
+      case 'co2_humidity':
+        measurements.push(
+          { key: 'co2Value', label: 'CO2', unit: 'ppm' },
+          { key: 'humidityValue', label: 'Fuktighet', unit: '%' }
         );
         break;
       default:
@@ -249,6 +255,7 @@ export default function SensorDetailsClient({
     humidityValue: reading.humidityValue,
     weightValue: reading.weightValue,
     temperatureValue: reading.temperatureValue,
+    co2Value: reading.co2Value,
     formattedTime: format(
       reading.timestamp instanceof Date
         ? reading.timestamp

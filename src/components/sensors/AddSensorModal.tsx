@@ -353,7 +353,8 @@ export default function AddSensorModal({
           <div className="flex items-center justify-center py-8">
             <Loader2 className="h-8 w-8 animate-spin" />
           </div>
-        ) : !canAddSensor ? (
+        ) : !canAddSensor && !buildingId ? (
+          // Only block if trying to register a new sensor (no buildingId)
           <div className="space-y-4">
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
@@ -448,11 +449,22 @@ export default function AddSensorModal({
 
             <TabsContent value="register" className="space-y-4">
               <form onSubmit={handleSubmit} className="space-y-4">
-                <Alert>
-                  <AlertDescription>
-                    Du har {availableSlots} ledig{availableSlots !== 1 ? 'e' : ''} sensorplass{availableSlots !== 1 ? 'er' : ''} ({limitInfo.current}/{limitInfo.max} brukt)
-                  </AlertDescription>
-                </Alert>
+                {!canAddSensor ? (
+                  <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>Ingen ledige sensorplasser</AlertTitle>
+                    <AlertDescription>
+                      Du har brukt alle {limitInfo.max} sensorplasser ({limitInfo.current}/{limitInfo.max}).
+                      Oppgrader abonnementet for å registrere flere sensorer, eller bruk "Knytt eksisterende" for å koble en sensor til denne bygningen.
+                    </AlertDescription>
+                  </Alert>
+                ) : (
+                  <Alert>
+                    <AlertDescription>
+                      Du har {availableSlots} ledig{availableSlots !== 1 ? 'e' : ''} sensorplass{availableSlots !== 1 ? 'er' : ''} ({limitInfo.current}/{limitInfo.max} brukt)
+                    </AlertDescription>
+                  </Alert>
+                )}
 
             <div className="space-y-2">
               <Label htmlFor="sensorId">Sensor-ID *</Label>
@@ -464,8 +476,9 @@ export default function AddSensorModal({
                   setFormData({ ...formData, sensorId: e.target.value })
                 }
                 required
+                disabled={!canAddSensor}
               />
-              
+
               {/* Sensor ID Validation Status */}
               {sensorIdStatus.type !== 'idle' && (
                 <div className="flex items-center gap-2 text-sm">
@@ -505,6 +518,7 @@ export default function AddSensorModal({
                   setFormData({ ...formData, name: e.target.value })
                 }
                 required
+                disabled={!canAddSensor}
               />
             </div>
 
@@ -515,6 +529,7 @@ export default function AddSensorModal({
                 onValueChange={(value: SensorType) =>
                   setFormData({ ...formData, type: value })
                 }
+                disabled={!canAddSensor}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -544,6 +559,14 @@ export default function AddSensorModal({
                       </div>
                     </div>
                   </SelectItem>
+                  <SelectItem value="co2_humidity" className="py-3">
+                    <div className="flex flex-col gap-1">
+                      <div className="font-medium">{SENSOR_TYPE_LABELS.co2_humidity}</div>
+                      <div className="text-xs text-muted-foreground whitespace-normal">
+                        {SENSOR_TYPE_DESCRIPTIONS.co2_humidity}
+                      </div>
+                    </div>
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -557,6 +580,7 @@ export default function AddSensorModal({
                 onChange={(e) =>
                   setFormData({ ...formData, location: e.target.value })
                 }
+                disabled={!canAddSensor}
               />
             </div>
 
@@ -570,7 +594,7 @@ export default function AddSensorModal({
                   </Button>
                   <Button
                     type="submit"
-                    disabled={loading || !sensorIdStatus.valid || checkingSensorId}
+                    disabled={loading || !sensorIdStatus.valid || checkingSensorId || !canAddSensor}
                   >
                     {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     Registrer sensor
@@ -638,6 +662,7 @@ export default function AddSensorModal({
                   setFormData({ ...formData, name: e.target.value })
                 }
                 required
+                disabled={!canAddSensor}
               />
             </div>
 
@@ -648,6 +673,7 @@ export default function AddSensorModal({
                 onValueChange={(value: SensorType) =>
                   setFormData({ ...formData, type: value })
                 }
+                disabled={!canAddSensor}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -677,6 +703,14 @@ export default function AddSensorModal({
                       </div>
                     </div>
                   </SelectItem>
+                  <SelectItem value="co2_humidity" className="py-3">
+                    <div className="flex flex-col gap-1">
+                      <div className="font-medium">{SENSOR_TYPE_LABELS.co2_humidity}</div>
+                      <div className="text-xs text-muted-foreground whitespace-normal">
+                        {SENSOR_TYPE_DESCRIPTIONS.co2_humidity}
+                      </div>
+                    </div>
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -690,6 +724,7 @@ export default function AddSensorModal({
                 onChange={(e) =>
                   setFormData({ ...formData, location: e.target.value })
                 }
+                disabled={!canAddSensor}
               />
             </div>
 

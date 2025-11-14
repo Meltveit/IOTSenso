@@ -221,14 +221,33 @@ export default function SensorCard({ sensor }: SensorCardProps) {
             <div className={cn("text-4xl font-bold", getStatusColor(sensor.status))}>
               {sensor.currentValue} {sensor.unit}
             </div>
-            {sensor.humidityValue !== undefined && sensor.type === 'temp_humidity' && (
+
+            {/* Secondary value based on sensor type */}
+            {sensor.humidityValue !== undefined && (sensor.type === 'temp_humidity' || sensor.type === 'co2_humidity') && (
               <div className="text-2xl font-semibold text-muted-foreground mt-2">
                 {sensor.humidityValue}%
               </div>
             )}
+            {sensor.weightValue !== undefined && sensor.type === 'water_weight' && (
+              <div className="text-2xl font-semibold text-muted-foreground mt-2">
+                {sensor.weightValue} kg
+              </div>
+            )}
+            {sensor.temperatureValue !== undefined && sensor.type === 'weight_temp' && (
+              <div className="text-2xl font-semibold text-muted-foreground mt-2">
+                {sensor.temperatureValue}°C
+              </div>
+            )}
+
             <div className="text-sm text-muted-foreground mt-1">
               {sensor.type === 'temp_humidity' && sensor.humidityValue !== undefined
                 ? 'Temperatur / Fuktighet'
+                : sensor.type === 'water_weight' && sensor.weightValue !== undefined
+                ? 'Vannstand / Vekt'
+                : sensor.type === 'weight_temp' && sensor.temperatureValue !== undefined
+                ? 'Vekt / Temperatur'
+                : sensor.type === 'co2_humidity' && sensor.humidityValue !== undefined
+                ? 'CO2 / Fuktighet'
                 : 'Nåværende verdi'}
             </div>
           </div>
