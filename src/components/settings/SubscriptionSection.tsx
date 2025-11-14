@@ -119,13 +119,22 @@ export default function SubscriptionSection({
       const data = await response.json();
 
       if (data.checkoutUrl) {
+        // Redirect to Stripe Checkout for new subscriptions
         window.location.href = data.checkoutUrl;
       } else if (data.success) {
-        toast.success(
-          isBusiness
-            ? "Abonnement oppdatert! Faktura sendes til din e-post."
-            : "Abonnement oppdatert!"
-        );
+        // Show the message from the API response
+        toast.success(data.message || "Abonnement oppdatert!", {
+          duration: 5000,
+        });
+
+        // Oppdater Firestore umiddelbart ved oppgradering
+        if (desiredSensorCount > subscribedSensorCount) {
+          const { doc, updateDoc } = await import('firebase/firestore');
+          const { db } = await import('@/lib/firebase');
+          await updateDoc(doc(db, "users", user.uid), {
+            numberOfSensors: desiredSensorCount,
+          });
+        }
       } else {
         throw new Error(data.error || "Kunne ikke oppdatere abonnement");
       }
@@ -242,6 +251,22 @@ export default function SubscriptionSection({
                 <p className="text-xs text-muted-foreground">
                   Minimum: {currentSensorCount || 1} (du har {currentSensorCount} sensor{currentSensorCount !== 1 ? 'er' : ''})
                 </p>
+                {desiredSensorCount < subscribedSensorCount && hasActiveSubscription && (
+                  <Alert className="mt-2">
+                    <Info className="h-4 w-4" />
+                    <AlertDescription className="text-xs">
+                      <strong>Nedgradering:</strong> Du betaler ut inneværende måned. Endringen trer i kraft ved neste fakturering.
+                    </AlertDescription>
+                  </Alert>
+                )}
+                {desiredSensorCount > subscribedSensorCount && hasActiveSubscription && (
+                  <Alert className="mt-2 bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800">
+                    <CheckCircle className="h-4 w-4 text-green-600" />
+                    <AlertDescription className="text-xs text-green-800 dark:text-green-200">
+                      <strong>Oppgradering:</strong> Får umiddelbart flere plasser. Belastes proporsjonalt.
+                    </AlertDescription>
+                  </Alert>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -413,10 +438,17 @@ export default function SubscriptionSection({
         <CardFooter className="border-t px-6 py-4 flex justify-between">
           <div className="text-sm text-muted-foreground">
             {hasActiveSubscription
-              ? "Endringer gjelder fra neste faktureringsperiode"
+              ? desiredSensorCount > subscribedSensorCount
+                ? "Oppgraderinger gjelder umiddelbart"
+                : desiredSensorCount < subscribedSensorCount
+                ? "Nedgraderinger trer i kraft ved neste fakturering"
+                : "Ingen endringer"
               : "Opprett abonnement for å starte overvåking"}
           </div>
-          <Button onClick={handleUpdateSubscription} disabled={updating}>
+          <Button
+            onClick={handleUpdateSubscription}
+            disabled={updating || (hasActiveSubscription && desiredSensorCount === subscribedSensorCount)}
+          >
             {updating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {hasActiveSubscription ? "Oppdater abonnement" : "Opprett abonnement"}
           </Button>
@@ -429,18 +461,34 @@ export default function SubscriptionSection({
           <CardHeader>
             <CardTitle>Administrer i Stripe</CardTitle>
             <CardDescription>
-              Endre betalingsmetode og se fakturaer
+              Endre betalingsmetode, se fakturaer og administrer abonnement
             </CardDescription>
           </CardHeader>
           <CardFooter className="border-t px-6 py-4">
             <Button
               variant="outline"
-              onClick={() =>
-                window.open(
-                  `https://billing.stripe.com/p/login/test_${userProfile.stripeCustomerId}`,
-                  "_blank"
-                )
-              }
+              onClick={async () => {
+                try {
+                  if (!user) return;
+                  const idToken = await user.getIdToken();
+                  const response = await fetch("/api/stripe/create-portal-session", {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                      Authorization: `Bearer ${idToken}`,
+                    },
+                  });
+                  const data = await response.json();
+                  if (data.url) {
+                    window.location.href = data.url;
+                  } else {
+                    throw new Error(data.error || "Kunne ikke åpne Stripe-portal");
+                  }
+                } catch (error: any) {
+                  console.error("Error opening portal:", error);
+                  toast.error("Kunne ikke åpne Stripe-portal");
+                }
+              }}
             >
               Åpne Stripe-portal
             </Button>

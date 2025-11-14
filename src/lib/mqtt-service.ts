@@ -93,32 +93,92 @@ export function connectMqtt() {
         const sensorData = doc.data();
         console.log(`🔄 Updating Firestore for sensor: ${sensorData.name} (${doc.id})`);
 
-        // Determine status based on ALL thresholds
+        // Determine status based on ALL thresholds (primary and secondary)
         let status: 'ok' | 'warning' | 'critical' = 'ok';
         let alertType: string | null = null;
-        
+        let alertMessage = '';
+
         if (sensorData.thresholds) {
-          const { upper, lower, warning, critical } = sensorData.thresholds;
-          
-          // Check critical threshold
-          if (value >= critical) {
+          const { upper, lower, warning: warningThreshold, critical: criticalThreshold, secondary } = sensorData.thresholds;
+
+          // Check primary value thresholds
+          if (value >= criticalThreshold) {
             status = 'critical';
             alertType = 'critical';
+            alertMessage = `Kritisk verdi på ${sensorData.name}: ${value}${sensorData.unit} (grense: ${criticalThreshold}${sensorData.unit})`;
           }
-          // Check warning threshold
-          else if (value >= warning) {
+          else if (value >= warningThreshold) {
             status = 'warning';
             alertType = 'warning';
+            alertMessage = `Advarsel for ${sensorData.name}: ${value}${sensorData.unit} (grense: ${warningThreshold}${sensorData.unit})`;
           }
-          // Check upper limit
           else if (upper !== undefined && value > upper) {
             status = 'warning';
             alertType = 'upper_limit';
+            alertMessage = `${sensorData.name} har overskredet øvre grense: ${value}${sensorData.unit} (grense: ${upper}${sensorData.unit})`;
           }
-          // Check lower limit
           else if (lower !== undefined && value < lower) {
             status = 'warning';
             alertType = 'lower_limit';
+            alertMessage = `${sensorData.name} er under nedre grense: ${value}${sensorData.unit} (grense: ${lower}${sensorData.unit})`;
+          }
+
+          // Check secondary value thresholds (for multi-value sensors)
+          if (secondary) {
+            let secondaryValue: number | undefined;
+            let secondaryUnit = '';
+            let secondaryLabel = '';
+
+            // Determine which secondary value to check based on sensor type
+            if (humidity !== undefined) {
+              secondaryValue = humidity;
+              secondaryUnit = '%';
+              secondaryLabel = 'Fuktighet';
+            } else if (weight !== undefined) {
+              secondaryValue = weight;
+              secondaryUnit = 'kg';
+              secondaryLabel = 'Vekt';
+            } else if (co2 !== undefined && sensorData.type === 'co2_humidity') {
+              // For co2_humidity, co2 is primary, so check humidity as secondary
+              if (humidity !== undefined) {
+                secondaryValue = humidity;
+                secondaryUnit = '%';
+                secondaryLabel = 'Fuktighet';
+              }
+            }
+
+            if (secondaryValue !== undefined) {
+              // Check secondary critical threshold (overrides primary if more severe)
+              if (secondary.critical !== undefined && secondaryValue >= secondary.critical) {
+                status = 'critical';
+                alertType = 'critical';
+                alertMessage = `Kritisk ${secondaryLabel.toLowerCase()} på ${sensorData.name}: ${secondaryValue}${secondaryUnit} (grense: ${secondary.critical}${secondaryUnit})`;
+              }
+              // Check secondary warning threshold
+              else if (secondary.warning !== undefined && secondaryValue >= secondary.warning) {
+                if (status !== 'critical') {
+                  status = 'warning';
+                  alertType = 'warning';
+                  alertMessage = `Advarsel for ${secondaryLabel.toLowerCase()} på ${sensorData.name}: ${secondaryValue}${secondaryUnit} (grense: ${secondary.warning}${secondaryUnit})`;
+                }
+              }
+              // Check secondary upper limit
+              else if (secondary.upper !== undefined && secondaryValue > secondary.upper) {
+                if (status !== 'critical' && status !== 'warning') {
+                  status = 'warning';
+                  alertType = 'upper_limit';
+                  alertMessage = `${sensorData.name} ${secondaryLabel.toLowerCase()} har overskredet øvre grense: ${secondaryValue}${secondaryUnit} (grense: ${secondary.upper}${secondaryUnit})`;
+                }
+              }
+              // Check secondary lower limit
+              else if (secondary.lower !== undefined && secondaryValue < secondary.lower) {
+                if (status !== 'critical' && status !== 'warning') {
+                  status = 'warning';
+                  alertType = 'lower_limit';
+                  alertMessage = `${sensorData.name} ${secondaryLabel.toLowerCase()} er under nedre grense: ${secondaryValue}${secondaryUnit} (grense: ${secondary.lower}${secondaryUnit})`;
+                }
+              }
+            }
           }
         }
 
@@ -164,26 +224,10 @@ export function connectMqtt() {
         await doc.ref.collection('readings').add(readingData);
 
         // Create alert if needed
-        if (alertType) {
-          let alertMessage = '';
-          switch (alertType) {
-            case 'critical':
-              alertMessage = `Kritisk verdi på ${sensorData.name}: ${value}${sensorData.unit} (grense: ${sensorData.thresholds.critical}${sensorData.unit})`;
-              break;
-            case 'warning':
-              alertMessage = `Advarsel for ${sensorData.name}: ${value}${sensorData.unit} (grense: ${sensorData.thresholds.warning}${sensorData.unit})`;
-              break;
-            case 'upper_limit':
-              alertMessage = `${sensorData.name} har overskredet øvre grense: ${value}${sensorData.unit} (grense: ${sensorData.thresholds.upper}${sensorData.unit})`;
-              break;
-            case 'lower_limit':
-              alertMessage = `${sensorData.name} har gått under nedre grense: ${value}${sensorData.unit} (grense: ${sensorData.thresholds.lower}${sensorData.unit})`;
-              break;
-          }
-
+        if (alertType && alertMessage) {
           // Get user path from doc reference
           const userPath = doc.ref.path.split('/sensors/')[0];
-          
+
           // Create alert in user's alerts collection
           await db.collection(`${userPath}/alerts`).add({
             sensorId: doc.id,

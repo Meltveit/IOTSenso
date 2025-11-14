@@ -533,93 +533,290 @@ export default function SensorDetailsClient({
             <CardTitle className="font-headline">Sensorinnstillinger</CardTitle>
             <CardDescription>Juster terskelverdier manuelt eller med AI.</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="upper" className="flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4" />
-                  Øvre grense
-                </Label>
-                <Input
-                  id="upper"
-                  type="number"
-                  step="0.1"
-                  value={sensor.thresholds.upper || ""}
-                  placeholder="Valgfritt"
-                  onChange={(e) =>
-                    setSensor({
-                      ...sensor,
-                      thresholds: { 
-                        ...sensor.thresholds, 
-                        upper: e.target.value ? Number(e.target.value) : undefined 
-                      },
-                    })
-                  }
-                />
-                <p className="text-xs text-muted-foreground">
-                  Varsel hvis verdien går over dette nivået
-                </p>
+          <CardContent className="space-y-6">
+            {/* Primary thresholds */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold flex items-center gap-2">
+                Terskler for {sensor.type === 'temp_humidity' ? 'Temperatur' : sensor.type === 'water_weight' ? 'Vannstand' : sensor.type === 'weight_temp' ? 'Vekt' : 'CO2'} ({sensor.unit})
+              </h3>
+
+              {/* Warning thresholds */}
+              <div className="space-y-3 p-3 border rounded-lg bg-yellow-50/50 dark:bg-yellow-950/20">
+                <Label className="text-sm font-medium text-yellow-700 dark:text-yellow-400">Advarsel-terskel</Label>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="warning-lower" className="flex items-center gap-2 text-xs">
+                      <TrendingDown className="h-3 w-3" />
+                      Nedre grense
+                    </Label>
+                    <Input
+                      id="warning-lower"
+                      type="number"
+                      step="0.1"
+                      value={sensor.thresholds.warning.lower || ""}
+                      placeholder="Valgfritt"
+                      onChange={(e) =>
+                        setSensor({
+                          ...sensor,
+                          thresholds: {
+                            ...sensor.thresholds,
+                            warning: {
+                              ...sensor.thresholds.warning,
+                              lower: e.target.value ? Number(e.target.value) : undefined
+                            }
+                          },
+                        })
+                      }
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Varsel hvis under
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="warning-upper" className="flex items-center gap-2 text-xs">
+                      <TrendingUp className="h-3 w-3" />
+                      Øvre grense
+                    </Label>
+                    <Input
+                      id="warning-upper"
+                      type="number"
+                      step="0.1"
+                      value={sensor.thresholds.warning.upper || ""}
+                      placeholder="Valgfritt"
+                      onChange={(e) =>
+                        setSensor({
+                          ...sensor,
+                          thresholds: {
+                            ...sensor.thresholds,
+                            warning: {
+                              ...sensor.thresholds.warning,
+                              upper: e.target.value ? Number(e.target.value) : undefined
+                            }
+                          },
+                        })
+                      }
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Varsel hvis over
+                    </p>
+                  </div>
+                </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="lower" className="flex items-center gap-2">
-                  <TrendingDown className="h-4 w-4" />
-                  Nedre grense
-                </Label>
-                <Input
-                  id="lower"
-                  type="number"
-                  step="0.1"
-                  value={sensor.thresholds.lower || ""}
-                  placeholder="Valgfritt"
-                  onChange={(e) =>
-                    setSensor({
-                      ...sensor,
-                      thresholds: { 
-                        ...sensor.thresholds, 
-                        lower: e.target.value ? Number(e.target.value) : undefined 
-                      },
-                    })
-                  }
-                />
-                <p className="text-xs text-muted-foreground">
-                  Varsel hvis verdien går under dette nivået
-                </p>
+              {/* Critical thresholds */}
+              <div className="space-y-3 p-3 border rounded-lg bg-red-50/50 dark:bg-red-950/20">
+                <Label className="text-sm font-medium text-red-700 dark:text-red-400">Kritisk terskel</Label>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="critical-lower" className="flex items-center gap-2 text-xs">
+                      <TrendingDown className="h-3 w-3" />
+                      Nedre grense
+                    </Label>
+                    <Input
+                      id="critical-lower"
+                      type="number"
+                      step="0.1"
+                      value={sensor.thresholds.critical.lower || ""}
+                      placeholder="Valgfritt"
+                      onChange={(e) =>
+                        setSensor({
+                          ...sensor,
+                          thresholds: {
+                            ...sensor.thresholds,
+                            critical: {
+                              ...sensor.thresholds.critical,
+                              lower: e.target.value ? Number(e.target.value) : undefined
+                            }
+                          },
+                        })
+                      }
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Kritisk hvis under
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="critical-upper" className="flex items-center gap-2 text-xs">
+                      <TrendingUp className="h-3 w-3" />
+                      Øvre grense
+                    </Label>
+                    <Input
+                      id="critical-upper"
+                      type="number"
+                      step="0.1"
+                      value={sensor.thresholds.critical.upper || ""}
+                      placeholder="Valgfritt"
+                      onChange={(e) =>
+                        setSensor({
+                          ...sensor,
+                          thresholds: {
+                            ...sensor.thresholds,
+                            critical: {
+                              ...sensor.thresholds.critical,
+                              upper: e.target.value ? Number(e.target.value) : undefined
+                            }
+                          },
+                        })
+                      }
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Kritisk hvis over
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4 pt-2">
-              <div className="space-y-2">
-                <Label htmlFor="warning">Advarsel-terskel</Label>
-                <Input
-                  id="warning"
-                  type="number"
-                  step="0.1"
-                  value={sensor.thresholds.warning}
-                  onChange={(e) =>
-                    setSensor({
-                      ...sensor,
-                      thresholds: { ...sensor.thresholds, warning: Number(e.target.value) },
-                    })
-                  }
-                />
+            {/* Secondary thresholds for multi-value sensors */}
+            {(sensor.type === 'temp_humidity' || sensor.type === 'water_weight' || sensor.type === 'weight_temp' || sensor.type === 'co2_humidity') && (
+              <div className="space-y-4 pt-4 border-t">
+                <h3 className="text-sm font-semibold flex items-center gap-2">
+                  Terskler for {sensor.type === 'temp_humidity' ? 'Fuktighet (%)' : sensor.type === 'water_weight' ? 'Vekt (kg)' : sensor.type === 'weight_temp' ? 'Temperatur (°C)' : 'Fuktighet (%)'}
+                </h3>
+
+                {/* Secondary Warning thresholds */}
+                <div className="space-y-3 p-3 border rounded-lg bg-yellow-50/50 dark:bg-yellow-950/20">
+                  <Label className="text-sm font-medium text-yellow-700 dark:text-yellow-400">Advarsel-terskel</Label>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="secondary-warning-lower" className="flex items-center gap-2 text-xs">
+                        <TrendingDown className="h-3 w-3" />
+                        Nedre grense
+                      </Label>
+                      <Input
+                        id="secondary-warning-lower"
+                        type="number"
+                        step="0.1"
+                        value={sensor.thresholds.secondary?.warning?.lower || ""}
+                        placeholder="Valgfritt"
+                        onChange={(e) =>
+                          setSensor({
+                            ...sensor,
+                            thresholds: {
+                              ...sensor.thresholds,
+                              secondary: {
+                                ...sensor.thresholds.secondary,
+                                warning: {
+                                  ...sensor.thresholds.secondary?.warning,
+                                  lower: e.target.value ? Number(e.target.value) : undefined
+                                }
+                              }
+                            },
+                          })
+                        }
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Varsel hvis under
+                      </p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="secondary-warning-upper" className="flex items-center gap-2 text-xs">
+                        <TrendingUp className="h-3 w-3" />
+                        Øvre grense
+                      </Label>
+                      <Input
+                        id="secondary-warning-upper"
+                        type="number"
+                        step="0.1"
+                        value={sensor.thresholds.secondary?.warning?.upper || ""}
+                        placeholder="Valgfritt"
+                        onChange={(e) =>
+                          setSensor({
+                            ...sensor,
+                            thresholds: {
+                              ...sensor.thresholds,
+                              secondary: {
+                                ...sensor.thresholds.secondary,
+                                warning: {
+                                  ...sensor.thresholds.secondary?.warning,
+                                  upper: e.target.value ? Number(e.target.value) : undefined
+                                }
+                              }
+                            },
+                          })
+                        }
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Varsel hvis over
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Secondary Critical thresholds */}
+                <div className="space-y-3 p-3 border rounded-lg bg-red-50/50 dark:bg-red-950/20">
+                  <Label className="text-sm font-medium text-red-700 dark:text-red-400">Kritisk terskel</Label>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="secondary-critical-lower" className="flex items-center gap-2 text-xs">
+                        <TrendingDown className="h-3 w-3" />
+                        Nedre grense
+                      </Label>
+                      <Input
+                        id="secondary-critical-lower"
+                        type="number"
+                        step="0.1"
+                        value={sensor.thresholds.secondary?.critical?.lower || ""}
+                        placeholder="Valgfritt"
+                        onChange={(e) =>
+                          setSensor({
+                            ...sensor,
+                            thresholds: {
+                              ...sensor.thresholds,
+                              secondary: {
+                                ...sensor.thresholds.secondary,
+                                critical: {
+                                  ...sensor.thresholds.secondary?.critical,
+                                  lower: e.target.value ? Number(e.target.value) : undefined
+                                }
+                              }
+                            },
+                          })
+                        }
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Kritisk hvis under
+                      </p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="secondary-critical-upper" className="flex items-center gap-2 text-xs">
+                        <TrendingUp className="h-3 w-3" />
+                        Øvre grense
+                      </Label>
+                      <Input
+                        id="secondary-critical-upper"
+                        type="number"
+                        step="0.1"
+                        value={sensor.thresholds.secondary?.critical?.upper || ""}
+                        placeholder="Valgfritt"
+                        onChange={(e) =>
+                          setSensor({
+                            ...sensor,
+                            thresholds: {
+                              ...sensor.thresholds,
+                              secondary: {
+                                ...sensor.thresholds.secondary,
+                                critical: {
+                                  ...sensor.thresholds.secondary?.critical,
+                                  upper: e.target.value ? Number(e.target.value) : undefined
+                                }
+                              }
+                            },
+                          })
+                        }
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Kritisk hvis over
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="critical">Kritisk terskel</Label>
-                <Input
-                  id="critical"
-                  type="number"
-                  step="0.1"
-                  value={sensor.thresholds.critical}
-                  onChange={(e) =>
-                    setSensor({
-                      ...sensor,
-                      thresholds: { ...sensor.thresholds, critical: Number(e.target.value) },
-                    })
-                  }
-                />
-              </div>
-            </div>
+            )}
 
             <div className="flex gap-3 pt-2">
               <Button 

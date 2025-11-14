@@ -36,8 +36,40 @@ export async function POST(request: Request) {
             if (subscriptionId) {
                  const subscription = await stripe.subscriptions.retrieve(subscriptionId as string);
                  const itemId = subscription.items.data[0].id;
-                 await stripe.subscriptionItems.update(itemId, { quantity });
-                 return NextResponse.json({ success: true, customerId: stripeCustomerId, subscriptionId });
+                 const currentQuantity = subscription.items.data[0].quantity || 0;
+
+                 // Determine proration behavior
+                 const isUpgrade = quantity > currentQuantity;
+
+                 if (isUpgrade) {
+                   // Oppgradering: Oppdater umiddelbart med proration
+                   await stripe.subscriptions.update(subscriptionId as string, {
+                     items: [{
+                       id: itemId,
+                       quantity: quantity,
+                     }],
+                     proration_behavior: 'create_prorations',
+                     billing_cycle_anchor: 'unchanged',
+                   });
+                 } else {
+                   // Nedgradering: Endre quantity ved period end (ingen proration)
+                   await stripe.subscriptions.update(subscriptionId as string, {
+                     items: [{
+                       id: itemId,
+                       quantity: quantity,
+                     }],
+                     proration_behavior: 'none',
+                   });
+                 }
+
+                 return NextResponse.json({
+                   success: true,
+                   customerId: stripeCustomerId,
+                   subscriptionId,
+                   message: isUpgrade
+                     ? 'Abonnement oppgradert! Mellomlegget vil legges til på neste faktura.'
+                     : 'Nedgradering vil tre i kraft ved neste faktureringsperiode'
+                 });
             } else {
                 const newSubscription = await stripe.subscriptions.create({
                     customer: stripeCustomerId,
@@ -51,8 +83,40 @@ export async function POST(request: Request) {
             if (subscriptionId) {
                 const subscription = await stripe.subscriptions.retrieve(subscriptionId as string);
                 const itemId = subscription.items.data[0].id;
-                await stripe.subscriptionItems.update(itemId, { quantity });
-                 return NextResponse.json({ success: true, customerId: stripeCustomerId, subscriptionId });
+                const currentQuantity = subscription.items.data[0].quantity || 0;
+
+                // Determine proration behavior
+                const isUpgrade = quantity > currentQuantity;
+
+                if (isUpgrade) {
+                  // Oppgradering: Oppdater umiddelbart med proration
+                  await stripe.subscriptions.update(subscriptionId as string, {
+                    items: [{
+                      id: itemId,
+                      quantity: quantity,
+                    }],
+                    proration_behavior: 'create_prorations',
+                    billing_cycle_anchor: 'unchanged',
+                  });
+                } else {
+                  // Nedgradering: Endre quantity ved period end (ingen proration)
+                  await stripe.subscriptions.update(subscriptionId as string, {
+                    items: [{
+                      id: itemId,
+                      quantity: quantity,
+                    }],
+                    proration_behavior: 'none',
+                  });
+                }
+
+                return NextResponse.json({
+                  success: true,
+                  customerId: stripeCustomerId,
+                  subscriptionId,
+                  message: isUpgrade
+                    ? 'Abonnement oppgradert! Du belastes for de ekstra sensorene umiddelbart.'
+                    : 'Nedgradering registrert. Du betaler ut denne måneden, og endringen trer i kraft ved neste fakturering.'
+                });
             } else {
                 const checkoutSession = await stripe.checkout.sessions.create({
                     customer: stripeCustomerId,

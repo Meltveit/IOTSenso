@@ -161,25 +161,46 @@ export default function BuildingCard({ building, sensors }: BuildingCardProps) {
 
           {/* Sensor-liste (kompakt) */}
           <div className="space-y-2">
-            {sensors.slice(0, 3).map(sensor => (
-              <div 
-                key={sensor.id} 
-                className="flex items-center justify-between p-2 bg-secondary/50 rounded-lg"
-              >
-                <div className="flex items-center gap-2">
-                  <div className={cn("h-2 w-2 rounded-full", {
-                    'bg-green-500': sensor.status === 'ok',
-                    'bg-yellow-500': sensor.status === 'warning',
-                    'bg-red-500': sensor.status === 'critical',
-                    'bg-gray-500': sensor.status === 'offline' || sensor.status === 'pending',
-                  })} />
-                  <span className="text-sm font-medium">{sensor.name}</span>
+            {sensors.slice(0, 3).map(sensor => {
+              // Determine secondary value based on sensor type
+              let secondaryValue = null;
+              if (sensor.type === 'temp_humidity' && sensor.humidityValue !== undefined) {
+                secondaryValue = `${sensor.humidityValue}%`;
+              } else if (sensor.type === 'water_weight' && sensor.weightValue !== undefined) {
+                secondaryValue = `${sensor.weightValue} kg`;
+              } else if (sensor.type === 'weight_temp' && sensor.temperatureValue !== undefined) {
+                secondaryValue = `${sensor.temperatureValue}°C`;
+              } else if (sensor.type === 'co2_humidity' && sensor.humidityValue !== undefined) {
+                secondaryValue = `${sensor.humidityValue}%`;
+              }
+
+              return (
+                <div
+                  key={sensor.id}
+                  className="flex items-center justify-between p-2 bg-secondary/50 rounded-lg"
+                >
+                  <div className="flex items-center gap-2">
+                    <div className={cn("h-2 w-2 rounded-full", {
+                      'bg-green-500': sensor.status === 'ok',
+                      'bg-yellow-500': sensor.status === 'warning',
+                      'bg-red-500': sensor.status === 'critical',
+                      'bg-gray-500': sensor.status === 'offline' || sensor.status === 'pending',
+                    })} />
+                    <span className="text-sm font-medium">{sensor.name}</span>
+                  </div>
+                  <div className="text-sm text-right">
+                    <div className="text-muted-foreground">
+                      {sensor.currentValue} {sensor.unit}
+                    </div>
+                    {secondaryValue && (
+                      <div className="text-xs text-muted-foreground/70">
+                        {secondaryValue}
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <span className="text-sm text-muted-foreground">
-                  {sensor.currentValue} {sensor.unit}
-                </span>
-              </div>
-            ))}
+              );
+            })}
             
             {sensors.length > 3 && (
               <p className="text-xs text-center text-muted-foreground">

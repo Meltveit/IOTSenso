@@ -130,6 +130,12 @@ export const SENSOR_TYPE_ICONS: Record<SensorType, string> = {
   co2_humidity: 'wind',
 };
 
+// Threshold range configuration
+export interface ThresholdRange {
+  lower?: number;  // Alert if value goes below this
+  upper?: number;  // Alert if value goes above this
+}
+
 export interface Sensor {
   id: string;
   sensorId: string;
@@ -139,10 +145,15 @@ export interface Sensor {
   name: string;
   location?: string;
   thresholds: {
-    upper?: number;
-    lower?: number;
-    warning: number;
-    critical: number;
+    // Warning thresholds - alert if value is outside this range
+    warning: ThresholdRange;
+    // Critical thresholds - critical alert if value is outside this range
+    critical: ThresholdRange;
+    // Secondary thresholds for multi-value sensors (humidity, weight, temperature, CO2)
+    secondary?: {
+      warning?: ThresholdRange;
+      critical?: ThresholdRange;
+    };
   };
   alertMethods: ('email' | 'sms')[];
   batteryLevel: number;
