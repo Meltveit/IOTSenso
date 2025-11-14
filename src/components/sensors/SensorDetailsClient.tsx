@@ -445,36 +445,42 @@ export default function SensorDetailsClient({
                   <ChartTooltip content={<ChartTooltipContent />} />
                   
                   {/* Threshold lines */}
-                  {sensor.thresholds.upper !== undefined && (
+                  {/* Warning thresholds */}
+                  {sensor.thresholds.warning?.upper !== undefined && (
                     <ReferenceLine
-                      y={sensor.thresholds.upper}
-                      stroke="hsl(var(--chart-3))"
-                      strokeDasharray="5 5"
+                      y={sensor.thresholds.warning.upper}
+                      stroke="hsl(var(--chart-2))"
+                      strokeDasharray="3 3"
                       strokeWidth={2}
-                      label={{ value: `Øvre: ${sensor.thresholds.upper}`, position: "right", fill: "hsl(var(--chart-3))" }}
+                      label={{ value: `Advarsel øvre: ${sensor.thresholds.warning.upper}`, position: "right", fill: "hsl(var(--chart-2))" }}
                     />
                   )}
-                  {sensor.thresholds.lower !== undefined && (
+                  {sensor.thresholds.warning?.lower !== undefined && (
                     <ReferenceLine
-                      y={sensor.thresholds.lower}
-                      stroke="hsl(var(--chart-4))"
-                      strokeDasharray="5 5"
+                      y={sensor.thresholds.warning.lower}
+                      stroke="hsl(var(--chart-2))"
+                      strokeDasharray="3 3"
                       strokeWidth={2}
-                      label={{ value: `Nedre: ${sensor.thresholds.lower}`, position: "right", fill: "hsl(var(--chart-4))" }}
+                      label={{ value: `Advarsel nedre: ${sensor.thresholds.warning.lower}`, position: "right", fill: "hsl(var(--chart-2))" }}
                     />
                   )}
-                  <ReferenceLine
-                    y={sensor.thresholds.warning}
-                    stroke="hsl(var(--chart-2))"
-                    strokeDasharray="3 3"
-                    label={{ value: `Advarsel: ${sensor.thresholds.warning}`, position: "right", fill: "hsl(var(--chart-2))" }}
-                  />
-                  <ReferenceLine
-                    y={sensor.thresholds.critical}
-                    stroke="hsl(var(--destructive))"
-                    strokeWidth={2}
-                    label={{ value: `Kritisk: ${sensor.thresholds.critical}`, position: "right", fill: "hsl(var(--destructive))" }}
-                  />
+                  {/* Critical thresholds */}
+                  {sensor.thresholds.critical?.upper !== undefined && (
+                    <ReferenceLine
+                      y={sensor.thresholds.critical.upper}
+                      stroke="hsl(var(--destructive))"
+                      strokeWidth={2}
+                      label={{ value: `Kritisk øvre: ${sensor.thresholds.critical.upper}`, position: "right", fill: "hsl(var(--destructive))" }}
+                    />
+                  )}
+                  {sensor.thresholds.critical?.lower !== undefined && (
+                    <ReferenceLine
+                      y={sensor.thresholds.critical.lower}
+                      stroke="hsl(var(--destructive))"
+                      strokeWidth={2}
+                      label={{ value: `Kritisk nedre: ${sensor.thresholds.critical.lower}`, position: "right", fill: "hsl(var(--destructive))" }}
+                    />
+                  )}
 
                   {/* Render Area components for each visible measurement */}
                   {visibleLines.value && (

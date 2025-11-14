@@ -99,28 +99,32 @@ export function connectMqtt() {
         let alertMessage = '';
 
         if (sensorData.thresholds) {
-          const { upper, lower, warning: warningThreshold, critical: criticalThreshold, secondary } = sensorData.thresholds;
+          const { warning: warningThreshold, critical: criticalThreshold, secondary } = sensorData.thresholds;
 
           // Check primary value thresholds
-          if (value >= criticalThreshold) {
+          // Critical lower bound
+          if (criticalThreshold?.lower !== undefined && value < criticalThreshold.lower) {
             status = 'critical';
             alertType = 'critical';
-            alertMessage = `Kritisk verdi på ${sensorData.name}: ${value}${sensorData.unit} (grense: ${criticalThreshold}${sensorData.unit})`;
+            alertMessage = `Kritisk lav verdi på ${sensorData.name}: ${value}${sensorData.unit} (under: ${criticalThreshold.lower}${sensorData.unit})`;
           }
-          else if (value >= warningThreshold) {
+          // Critical upper bound
+          else if (criticalThreshold?.upper !== undefined && value > criticalThreshold.upper) {
+            status = 'critical';
+            alertType = 'critical';
+            alertMessage = `Kritisk høy verdi på ${sensorData.name}: ${value}${sensorData.unit} (over: ${criticalThreshold.upper}${sensorData.unit})`;
+          }
+          // Warning lower bound
+          else if (warningThreshold?.lower !== undefined && value < warningThreshold.lower) {
             status = 'warning';
             alertType = 'warning';
-            alertMessage = `Advarsel for ${sensorData.name}: ${value}${sensorData.unit} (grense: ${warningThreshold}${sensorData.unit})`;
+            alertMessage = `Advarsel lav verdi for ${sensorData.name}: ${value}${sensorData.unit} (under: ${warningThreshold.lower}${sensorData.unit})`;
           }
-          else if (upper !== undefined && value > upper) {
+          // Warning upper bound
+          else if (warningThreshold?.upper !== undefined && value > warningThreshold.upper) {
             status = 'warning';
-            alertType = 'upper_limit';
-            alertMessage = `${sensorData.name} har overskredet øvre grense: ${value}${sensorData.unit} (grense: ${upper}${sensorData.unit})`;
-          }
-          else if (lower !== undefined && value < lower) {
-            status = 'warning';
-            alertType = 'lower_limit';
-            alertMessage = `${sensorData.name} er under nedre grense: ${value}${sensorData.unit} (grense: ${lower}${sensorData.unit})`;
+            alertType = 'warning';
+            alertMessage = `Advarsel høy verdi for ${sensorData.name}: ${value}${sensorData.unit} (over: ${warningThreshold.upper}${sensorData.unit})`;
           }
 
           // Check secondary value thresholds (for multi-value sensors)
@@ -148,34 +152,30 @@ export function connectMqtt() {
             }
 
             if (secondaryValue !== undefined) {
-              // Check secondary critical threshold (overrides primary if more severe)
-              if (secondary.critical !== undefined && secondaryValue >= secondary.critical) {
+              // Check secondary critical thresholds (override primary if more severe)
+              if (secondary.critical?.lower !== undefined && secondaryValue < secondary.critical.lower) {
                 status = 'critical';
                 alertType = 'critical';
-                alertMessage = `Kritisk ${secondaryLabel.toLowerCase()} på ${sensorData.name}: ${secondaryValue}${secondaryUnit} (grense: ${secondary.critical}${secondaryUnit})`;
+                alertMessage = `Kritisk lav ${secondaryLabel.toLowerCase()} på ${sensorData.name}: ${secondaryValue}${secondaryUnit} (under: ${secondary.critical.lower}${secondaryUnit})`;
               }
-              // Check secondary warning threshold
-              else if (secondary.warning !== undefined && secondaryValue >= secondary.warning) {
+              else if (secondary.critical?.upper !== undefined && secondaryValue > secondary.critical.upper) {
+                status = 'critical';
+                alertType = 'critical';
+                alertMessage = `Kritisk høy ${secondaryLabel.toLowerCase()} på ${sensorData.name}: ${secondaryValue}${secondaryUnit} (over: ${secondary.critical.upper}${secondaryUnit})`;
+              }
+              // Check secondary warning thresholds
+              else if (secondary.warning?.lower !== undefined && secondaryValue < secondary.warning.lower) {
                 if (status !== 'critical') {
                   status = 'warning';
                   alertType = 'warning';
-                  alertMessage = `Advarsel for ${secondaryLabel.toLowerCase()} på ${sensorData.name}: ${secondaryValue}${secondaryUnit} (grense: ${secondary.warning}${secondaryUnit})`;
+                  alertMessage = `Advarsel lav ${secondaryLabel.toLowerCase()} for ${sensorData.name}: ${secondaryValue}${secondaryUnit} (under: ${secondary.warning.lower}${secondaryUnit})`;
                 }
               }
-              // Check secondary upper limit
-              else if (secondary.upper !== undefined && secondaryValue > secondary.upper) {
-                if (status !== 'critical' && status !== 'warning') {
+              else if (secondary.warning?.upper !== undefined && secondaryValue > secondary.warning.upper) {
+                if (status !== 'critical') {
                   status = 'warning';
-                  alertType = 'upper_limit';
-                  alertMessage = `${sensorData.name} ${secondaryLabel.toLowerCase()} har overskredet øvre grense: ${secondaryValue}${secondaryUnit} (grense: ${secondary.upper}${secondaryUnit})`;
-                }
-              }
-              // Check secondary lower limit
-              else if (secondary.lower !== undefined && secondaryValue < secondary.lower) {
-                if (status !== 'critical' && status !== 'warning') {
-                  status = 'warning';
-                  alertType = 'lower_limit';
-                  alertMessage = `${sensorData.name} ${secondaryLabel.toLowerCase()} er under nedre grense: ${secondaryValue}${secondaryUnit} (grense: ${secondary.lower}${secondaryUnit})`;
+                  alertType = 'warning';
+                  alertMessage = `Advarsel høy ${secondaryLabel.toLowerCase()} for ${sensorData.name}: ${secondaryValue}${secondaryUnit} (over: ${secondary.warning.upper}${secondaryUnit})`;
                 }
               }
             }
